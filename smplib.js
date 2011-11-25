@@ -1,7 +1,4 @@
 
-/**
-* CORE
-*/
 
 (function(){
 
@@ -9,6 +6,10 @@
 	  
 		smp = {};
 	}
+
+	/**
+	* CORE
+	*/
 
 	if (typeof window.console == 'undefined') {
 		window.console = {};
@@ -189,7 +190,7 @@
 	
 	
 	/**
-	* 	@example	var teste = ["Portugal","It·lia","Finl‚ndia","Bulg·ria"];
+	* 	@example	var teste = ["Portugal","It√°lia","Finl√¢ndia","Bulg√°ria"];
 	*				smp.each(teste,
 	*					function(key,value){
 	*						console.log(key+" // "+value);
@@ -223,14 +224,14 @@
 	*					document.write("Hello!<br/>");
 	*				});
 	*/
-	smp.times = function(number,callback)
+	smp.times = function(number,callback){
 		var i;
 		for(i=0;i<number; i++){
 			callback();
 		}
 	}
 	
-	
+	//////////////////
 	/**
 	* MATH
 	*/
@@ -379,7 +380,7 @@
 		return point;
 	}
 	
-	
+	//////////////////
 	/**
 	* STRING
 	*/
@@ -476,7 +477,7 @@
 		{
 			var tempString = processString.substr(start, maxlen);
 			
-			//se ainda existem pelo menos maxlen letras atÈ ao fim da string
+			//se ainda existem pelo menos maxlen letras at√© ao fim da string
 			if (tempString.length == maxlen)
 			{
 				var j = tempString.length - 1;
@@ -491,7 +492,7 @@
 				}
 							
 				if(j == 0){
-				//n„o existirem brancos, procura o prÛximo mais adiante
+				//n√£o existirem brancos, procura o pr√≥ximo mais adiante
 					var pos = start + processString.substr(start).search(" ");
 					
 					if(pos > start-1){
@@ -500,7 +501,7 @@
 						start = pos + 1;
 					}else{
 						
-						//se j· n„o existirem mais brancos, termina o processo
+						//se j√° n√°o existirem mais brancos, termina o processo
 						tempString = processString.substr(start);
 						start = processString.length;
 					}
@@ -510,7 +511,7 @@
 				}
 				
 			}else{
-			//caso contr·rio, termina o processo
+			//caso contr√°rio, termina o processo
 				start = processString.length;
 			}
 			chunkedString.push(tempString);
@@ -550,6 +551,7 @@
 
 	}
 	
+	//////////////////
 	/**
 	* DATE
 	*/
@@ -558,6 +560,9 @@
 	
 	//static methods
 	smp.date.print = function() {
+		
+		function pad2(number) { return (number < 10 ? '0' : '') + number };
+		
 		var dt = new Date();
 		var dtstring = dt.getFullYear()
 			+ '-' + pad2(dt.getMonth()+1)
@@ -570,9 +575,111 @@
 	}
 	
 	
+	//////////////////
+	/**
+	* EVENTS
+	*/
+	
+	_createNamespace("smp.events");
+	smp.events = _createModule();
 	
 	
+	var EventDispatcher = (function(){
+
+		var Constructor;
 	
+		Constructor = function()
+		{
+			var listeners = [];
+			
+			
+			//private
+			//event object
+			function CustomEvent(){
+				this.name = "";
+				this.data = {};
+			}
+			
+			function _dispatchEvent(evt, data)
+			{
+				var j, eventObj;
+				for(j=0; j<listeners.length; j++){
+					if(listeners[j][0] == evt){
+						if(typeof listeners[j][1] === "function"){
+							eventObj = new CustomEvent();
+							eventObj.name = evt;
+							eventObj.data = data;
+							listeners[j][1](eventObj);
+						}
+					}
+				}
+			}
+			
+			//protected
+			function _addEventListener(evt,callback){
+				listeners.push([evt,callback]);
+			}
+			function _removeEventListener(evt, callback){
+				var j;
+				for(j=0; j<listeners.length; j++){
+					if(listeners[j][0] == evt && listeners[j][1] == callback){
+						listeners.splice(j,1);
+						//no break is used because there might have been redundancy of listeners
+					}
+				}
+			}
+			
+			function _extend(inheritedObj){
+				var inheritedObj = inheritedObj || {};
+				var i, 
+					toString = Object.prototype.toString, 
+					astr = "[object Array]";
+				
+				
+				function _extendCycle(superObj, inheritedObj){
+					
+					for(i in superObj){
+						if(superObj.hasOwnProperty(i)){
+							if(typeof superObj[i] === "object"){
+								inheritedObj[i] = (toString.call(superObj[i])===astr) ? [] : {};
+								_extendCycle(superObj[i], inheritedObj[i]);
+							}else{
+								inheritedObj[i] = superObj[i];
+							}
+						}
+					}
+					return inheritedObj;
+				}
+				
+				_extendCycle(this,inheritedObj);
+				
+				return inheritedObj;
+			
+			}
+			
+			//public
+			this.addEventListener = _addEventListener;
+			this.removeEventListener = _removeEventListener;
+			this.dispatchEvent = _dispatchEvent;
+			this.extend = _extend;
+				
+				
+		};
+		
+		return Constructor;
+		
+	}());
+	var eventDispatcher = new EventDispatcher();
+	
+	//static methods
+	smp.events.create = function() {
+		return new EventDispatcher();
+	}
+	smp.events.extend = function(obj) {
+		obj = eventDispatcher.extend(obj);
+	}
+	
+	//////////////////
 	/**
 	* URL
 	*/
@@ -603,7 +710,7 @@
 	}
 	
 	
-	
+	//////////////////
 	/**
 	* GEOMETRY
 	*/
