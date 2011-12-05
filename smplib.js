@@ -223,14 +223,14 @@
 	
 		
 	/**
-	* @example smp.times(10, function(){
-	*					document.write("Hello!<br/>");
+	* @example smp.times(10, function(count){
+	*					document.write("Hello! "+count.toString());
 	*				});
 	*/
 	smp.times = function(number,callback){
 		var i;
 		for(i=0;i<number; i++){
-			callback();
+			callback(i);
 		}
 	}
 	
