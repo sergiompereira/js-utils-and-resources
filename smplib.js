@@ -136,7 +136,9 @@
  
 	smp.clone = _clone;
 	smp.extend = _extend;
-	
+	/**
+	*	@see	: also json2.js
+	*/
 	smp.serialize = function(_obj)
 	{
 	   // Let Gecko browsers do this the easy way
@@ -187,6 +189,7 @@
 	   }
 
 	}
+
 	
 	
 	/**
@@ -210,9 +213,9 @@
 			}else{
 				var key;
 				for(key in obj){
-					if (hasOwnProperty.call(obj, key)) {
+					//if (context.fnc === "function") {
 						fnc.call(context, key, obj[key], obj);
-					}
+					//}
 				}
 			}
 		}
@@ -230,6 +233,79 @@
 			callback();
 		}
 	}
+	
+	
+	///////////////
+	/**
+	* DOM
+	*/
+	
+	_createNamespace("smp.dom");
+	smp.dom = _createModule();
+	
+	smp.dom.get = function(value){
+		var value = smp.string.trim(value);
+		var nvalue = value.substr(1);
+		var fchar = value.substr(0,1);
+		if(fchar == "#"){
+			return document.getElementById(nvalue);
+		}else if(fchar == "."){
+			return document.getElementsByClassName(nvalue);
+		}else{
+			return document.getElementsByTagName(value);
+		}
+		return false;
+	}
+
+	smp.dom.html = function(obj, html){
+	console.log(obj.innerHTML)
+		if(obj.innerHTML !== null && obj.innerHTML !== undefined){
+			obj.innerHTML = html;
+			return true;
+		}
+		return false;
+	}
+	
+	smp.dom.attr = function (obj, name, value){
+		if(obj.setAttribute !== null && obj.setAttribute !== undefined && typeof obj.setAttribute === 'function'){
+			obj.setAttribute(name,value);
+			return true;
+		}
+		return false;
+	}
+
+	
+	smp.dom.hide = function(obj){
+		
+		if(obj.style !== null && obj.style !== undefined){
+			obj.style.display = "none";
+		}
+	}
+	
+	/**
+	* TODO	: check the element tag and decide between block or inline
+	*/
+	smp.dom.show = function(obj){
+		
+		if(obj.style !== null && obj.style !== undefined){
+			obj.style.display = "block";
+		}
+	}
+	
+	
+	///////////////
+	/**
+	* BOM
+	*/
+
+	_createNamespace("smp.bom");
+	smp.bom = _createModule();
+	
+	smp.bom.popup = function(url, name, width, height, left, top, resizable){
+		
+		return window.open(url,name,'width='+width+',height='+height+',left='+left+',top='+top+',resizable='+resizable);
+	}
+
 	
 	//////////////////
 	/**
@@ -391,12 +467,12 @@
 	
 	smp.string.trim = function(str)
 	{
-		var l=0; var r=s.length -1;
-		while(l < s.length && s[l] == ' ')
+		var l=0; var r=str.length -1;
+		while(l < str.length && str[l] == ' ')
 		{	l++; }
-		while(r > l && s[r] == ' ')
+		while(r > l && str[r] == ' ')
 		{	r-=1;	}
-		return s.substring(l, r+1);
+		return str.substring(l, r+1);
 	}
 	
 	smp.string.isWhitespace = function(ch) 
