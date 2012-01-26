@@ -98,11 +98,14 @@
 				switch(type){
 					case "circle":
 						_fixDef.shape = new b2CircleShape(w/_scale);
+						//the registration point is at the center in circles
 						_graphics = GraphicsFactory.createCircle(w,c,a,s,sc)
 						_grShape = new Shape(_graphics);
 						
 				 		//_grShape.type = "bar";
 				    	_stage.addChild(_grShape);
+						_grShape.width = w*2;
+						_grShape.height = w*2;
 				    	break;
 					case "rect":
 						_fixDef.shape = new b2PolygonShape();
@@ -111,11 +114,14 @@
 			    		The box is centered on the origin of the parent.
 			    		*/
 						_fixDef.shape.SetAsBox(w/_scale/2, h/_scale/2);
+						//the registration point is at the upper left corner in rects
 						_graphics = GraphicsFactory.createRect(w,h,c,a,s,sc)
 						_grShape = new Shape(_graphics);
 						
 				 		//_grShape.type = "bar";
 				    	_stage.addChild(_grShape);
+						_grShape.width = w;
+						_grShape.height = h;
 				    	break;
 				}
 				
@@ -150,6 +156,9 @@
 					case "dynamic":
 						_bodyDef.type = b2Body.b2_dynamicBody;
 						break;
+					case "kinematic":
+						_bodyDef.type = b2Body.b2_kinematicBody;
+						break;
 					default:
 					//case "static":
 						_bodyDef.type = b2Body.b2_staticBody;
@@ -159,6 +168,7 @@
 			 
 				_body = _world.CreateBody(_bodyDef);
 				_body.CreateFixture(_fixDef);
+				_body.userData = {actor:this};
 				
 				_grShape.x = x+width/2;
 				_grShape.y = y+height/2;
@@ -203,6 +213,8 @@
 			
 			this.getDisplay = function(){return _grShape;};
 			this.getBody = function(){return _body};
+			this.getBodyDef = function(){return _bodyDef};
+			//this.getFixtureDef = function(){return _fixDef}
 			this.scale = _scale;
 			this.alive = _alive;
 			//this.type = type;
