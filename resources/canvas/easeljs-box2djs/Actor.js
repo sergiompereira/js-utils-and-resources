@@ -140,7 +140,7 @@
 			 * @param angle
 			 * @param type
 			 */
-			function defineBody(x,y,angle,type,mouseEnabled)
+			function defineBody(x,y,angle,type,mouseEnabled,damping)
 			{
 				
 				if(!_fixDef || !_grShape){
@@ -150,6 +150,7 @@
 				_bodyDef = new b2BodyDef;
 				_bodyDef.position.Set((x+width/2)/_scale, (y+height/2)/_scale);			 
 				(angle)?_bodyDef.angle = angle * (Math.PI / 180):_bodyDef.angle = 0;
+				(damping) ? _bodyDef.angularDamping = damping : _bodyDef.angularDamping = 0;
 				
 				switch(type)
 				{
