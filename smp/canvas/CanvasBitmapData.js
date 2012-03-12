@@ -2,7 +2,7 @@
 /**
  * namespace pattern
  * @class CanvasBitmapData
- * @namespace smp.geom
+ * @namespace smp.canvas
  */
 
 (function(){
@@ -14,7 +14,7 @@
 		//private properties
 		var Constructor;
 		var _canvas = document.createElement("canvas");
-		_canvas.name = "Imagem";
+		_canvas.name = "canvasutil";
 		var _context;
 		
 		var _imageWidth;
@@ -118,6 +118,63 @@
 			return _bitmapData;
 		
 		}
+		
+		
+		function _getPointAtIndex(id, bmpData){
+			
+			if(!bmpData || bmpData === "undefined"){		
+				bmpData = _originalBitmapData;
+			}
+			
+			var point = {};
+			var tx = id%(bmpData.width * 4)/4;
+			point.x = Math.floor(tx);
+			var subindex = (tx%1) * 4 - 1;
+			point.y = Math.floor((id/4)/bmpData.width);
+			
+			point.r = bmpData.data[id-subindex];
+			point.g = bmpData.data[id-subindex+1];
+			point.b = bmpData.data[id-subindex+2];
+			point.a = bmpData.data[id-subindex+3];
+			
+			switch(subindex){
+				case 0:
+					point.color = "R";
+					break;
+				case 1:
+					point.color = "G";
+					break;
+				case 2:
+					point.color = "B";
+					break;
+				case 3:
+					point.color = "A";
+					break;
+			}
+			
+			
+			return point;
+			
+			
+		}
+		
+		function _getDataAtPoint(x,y, bmpData){
+			
+			if(!bmpData || bmpData === "undefined"){		
+				bmpData = _originalBitmapData;
+			}
+			
+			var id = y*bmpData.width*4+ x*4;
+			var data = {};
+			data.id = id;
+			data.r = bmpData[id];
+			data.g = bmpData[id+1];
+			data.b = bmpData[id+2];
+			data.a = bmpData[id+3];
+			
+			return data;
+		}
+		
 		//
 		
 		function _addFilter(filter, value){
@@ -172,6 +229,10 @@
 			return newImageData;
 			
 		}
+		
+		function _clearFilters(){
+			filters.splice(0, filters.length);
+		};
 	
 		//internal
 		function _createCanvas(w,h){
@@ -216,8 +277,11 @@
 			setImage: _setImage,
 			getBitmapData: _getBitmapData,
 			savePNGImage: _savePNGImage,
+			getDataAtPoint:_getDataAtPoint,
+			getPointAtIndex:_getPointAtIndex,
 			addFilter: _addFilter,
-			applyFilters:_applyFilters
+			applyFilters:_applyFilters,
+			clearFilters:_clearFilters
 			
 		};
 		
