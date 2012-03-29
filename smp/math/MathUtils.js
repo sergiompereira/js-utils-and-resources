@@ -6,10 +6,10 @@
 
 (function(){
 	
-	smp.namespace("smp.utils.NumberUtilities");
+	smp.namespace("smp.math.MathUtils");
 	
 	//constructor (instance creation)
-	smp.utils.NumberUtilities = (function()
+	smp.math.MathUtils = (function()
 	{
 		var _value;
 		var Constructor;
@@ -44,7 +44,7 @@
      *                             round the number. The default is 1.
      *  @return                    The number rounded to the nearest interval.
      */
-    smp.utils.NumberUtilities.round = function(nNumber, nRoundToInterval) {
+    smp.math.MathUtils.round = function(nNumber, nRoundToInterval) {
       // Return the result
 	  if(nRoundToInterval == null){
 	  	nRoundToInterval = 1;
@@ -63,7 +63,7 @@
      *                             get the floor part of the number. The default is 1.
      *  @return                    The floor part of the number.
      */
-   smp.utils.NumberUtilities.floor  = function(nNumber, nRoundToInterval) {
+   smp.math.MathUtils.floor  = function(nNumber, nRoundToInterval) {
     
 	  if(nRoundToInterval == null){
 	  	nRoundToInterval = 1;
@@ -82,7 +82,7 @@
      *                             get the ceiling part of the number. The default is 1.
      *  @return                    The ceiling part of the number.
      */
-    smp.utils.NumberUtilities.ceil = function(nNumber, nRoundToInterval) {
+    smp.math.MathUtils.ceil = function(nNumber, nRoundToInterval) {
 
 	  if(nRoundToInterval == null){
 	  	nRoundToInterval = 1;
@@ -102,7 +102,7 @@
      *  @param  roundToInterval    (optional) The interval to which to round.
      *  @return                    The random number.
      */
-    smp.utils.NumberUtilities.random = function(nMinimum, nMaximum, nRoundToInterval) {
+    smp.math.MathUtils.random = function(nMinimum, nMaximum, nRoundToInterval) {
 
 	  if(nMaximum == null){
 	  	nMaximum = 0;
@@ -132,11 +132,11 @@
 
         // Return the random value. Use the custom floor( ) method to ensure the
         // result is rounded to the proper number of decimal places.
-        return NumberUtilities.floor(nRandomNumber, nRoundToInterval);
+        return smp.math.MathUtils.floor(nRandomNumber, nRoundToInterval);
       }
 	  
 	  
-	smp.utils.NumberUtilities.scale = function(valor, inMin , inMax , outMin , outMax) {
+	smp.math.MathUtils.scale = function(valor, inMin , inMax , outMin , outMax) {
 			return (valor - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
 	}
 	
@@ -149,7 +149,7 @@
 	 * @param 	y				: y position in the matrix grid
 	 * @return					: index in the array
 	 */
-	smp.utils.NumberUtilities.getIndexFromPoint = function(matrixHCount, x, y) {
+	smp.math.MathUtils.getIndexFromPoint = function(matrixHCount, x, y) {
 		if(x<matrixHCount && x>=0){
 			return y*matrixHCount + x;
 		}
@@ -165,7 +165,7 @@
 	 * @param	index			: position of the element in the array
 	 * @return					: an object with properties x and y
 	 */
-	smp.utils.NumberUtilities.getPointFromIndex = function(matrixHCount, index) {
+	smp.math.MathUtils.getPointFromIndex = function(matrixHCount, index) {
 		var point = {};
 		var tx = (index % matrixHCount);
 		point.x = Math.floor(tx);
@@ -173,6 +173,45 @@
 		point.y = Math.floor(index/matrixHCount);
 		return point;
 	}
+	
+	   /**
+     *  Round a number. By default the number is rounded to the nearest
+     *  integer. Specifying a roundToInterval parameter allows you to round
+     *  to the nearest of a specified interval.
+     *  @param  number             The number you want to round.
+     *  @param  nRoundToInterval   (optional) The interval to which you want to
+     *                             round the number. The default is 1.
+     *  @return                    The number rounded to the nearest interval.
+     */
+    smp.math.MathUtils.distance = function(x1, y1, x2, y2) 
+    {
+    	var dx = x1 - x2;
+		var dy = y1 - y2;
+		return Math.sqrt(dx*dx+dy*dy);
+    }
+    
+    smp.math.MathUtils.distance3 = function(x1, y1, z1, x2, y2, z2) 
+    {
+		var dxz = smp.math.MathUtils.distance(x1, z1, x2, z2);
+		var dy = y1 - y2;
+		return Math.sqrt(dxz*dxz+dy*dy);
+    }
+	
+	smp.math.MathUtils.degreeToRadian = function(deg) {
+		return deg * (Math.PI / 180) % (2*Math.PI);
+	}
+		
+	smp.math.MathUtils.radianToDegree = function(rad) {
+		return rad  * (180/Math.PI) % 360;
+	}
+	
+	smp.math.MathUtils.cosineInterpolation = function(v1,v2,r){
+		var pi = 3.1415927;
+		var ft = r * pi;
+		var f = (1 - Math.cos(ft)) * 0.5;
+		return v1*(1-f) + v2*f;
+	}
+	
 
 }());
     

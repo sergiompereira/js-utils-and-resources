@@ -158,7 +158,14 @@
 			
 		}
 		
-		function _getDataAtPoint(x,y, bmpData){
+		/**
+		 * @param	int			x		:	horizontal position on the image data grid
+		 * @param	int			y		: 	vertical position on the image data grid
+		 * @param	ImageData	bmpData	:	the image data returned from the canvas 2d context method 'getImageData(x,y,w,h).
+		 * @param	Boolean		hexColor:	if false, the method returns an object with properties id,r,g,b and a in decimal (0-255) values.
+		 * 									If true, the method returns an object with properties id,r,g,b and a in hexadecimal values.	
+		 */
+		function _getDataAtPoint(x,y, bmpData, hexColor){
 			
 			if(!bmpData || bmpData === "undefined"){		
 				bmpData = _originalBitmapData;
@@ -167,10 +174,28 @@
 			var id = y*bmpData.width*4+ x*4;
 			var data = {};
 			data.id = id;
-			data.r = bmpData[id];
-			data.g = bmpData[id+1];
-			data.b = bmpData[id+2];
-			data.a = bmpData[id+3];
+			
+			if(hexColor){
+				var value,i,temp = [];
+				for(i=0; i<4; i++){
+					value = bmpData.data[id+i].toString(16);
+					if(value.length < 2){
+						value = '0'+value;
+					}
+					temp.push(value); 
+				}
+				
+				data.r = temp[id];
+				data.g = temp[id+1];
+				data.b = temp[id+2];
+				data.a = temp[id+3];
+				
+			}else{
+				data.r = bmpData.data[id];
+				data.g = bmpData.data[id+1];
+				data.b = bmpData.data[id+2];
+				data.a = bmpData.data[id+3];
+			}
 			
 			return data;
 		}

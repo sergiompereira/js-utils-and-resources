@@ -7,8 +7,8 @@
 
 (function(){
 	
-	smp.namespace("smp.geom.Matrix");
-	smp.geom.Matrix = (function()
+	smp.namespace("smp.math.Matrix");
+	smp.math.Matrix = (function()
 	{
 		/*
 		 * [a c tx
