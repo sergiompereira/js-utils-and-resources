@@ -24,18 +24,34 @@
 				g.beginFill(color);
 				
 				g.drawCircle(0,0, size);
+				g.radius = size;
 				
 				var shape = new Shape(g);
 				stage.addChild(shape);
+				shape.color = color;
+				
 				objects.push(shape);
+				
 			}
 			
 			this.numParticles = function(){
 				return objects.length;
 			}
 			
-			this.updateParticle = function(index,x,y,rotation,scaleX,scaleY,alpha){
+			
+			this.updateParticle = function(index,x,y,rotation,scaleX,scaleY,alpha,color){
 				
+				
+				if(objects[index].color != color){
+					
+					var oldg = objects[index].graphics;
+					var g = new Graphics();
+					g.beginFill(color);
+					g.drawCircle(0,0, oldg.radius);
+					g.radius = oldg.radius;
+					objects[index].graphics = g;
+					objects[index].color = color;
+				}
 				objects[index].x = x;
 				objects[index].y = y;
 				objects[index].rotation = rotation;

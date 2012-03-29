@@ -4,10 +4,13 @@
 	
 		var Constructor = function(){
 			
+			//group level (Smoke)
 			 this.frequency = 3;
 			 this.blurRatio = [2,4];
+			 this.colors = {start:'#40fe4a',end:'#7e18ef'};
 			
-				  this.maxXOffset  =  50.0;
+				 //particle level (SmokeParticle)
+				  this.maxXOffset  =  10.0;
 				 
 				  this.minXSpeed  =  -1.0;
 				  this.maxXSpeed  =  1.0;
@@ -23,14 +26,15 @@
 		 
 				  this.fadeInRate  =  0.05;
 				  this.minParticleAlpha  =  0.3;
-				  this.maxParticleAlpha  =  0.4;
+				  this.maxParticleAlpha  =  0.8;
 				  this.minAlphaDecay  =  0.005;
 				  this.maxAlphaDecay  =  0.01;
 		 
 				  this.minInitialScale  =  0.3;
 				  this.maxInitialScale  =  0.4;
 				  this.minParticleExpansionRate  =  0.02;
-				  this.maxParticleExpansionRate  =  0.05;
+				  this.maxParticleExpansionRate  =  0.08;
+				  
 		}
 		
 		return Constructor;

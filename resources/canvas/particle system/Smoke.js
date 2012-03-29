@@ -8,6 +8,7 @@
 				
 				var Config = new SmokeConfig();
 
+				
 				var eventDispatcher, canvas, renderer;
 				
 				canvas = canvasel;
@@ -42,7 +43,7 @@
 					particleArray.push(smoke);
 			 
 					// Add our particle to the particleCanvas sprite, not directly to the stage!
-					renderer.addParticle(radius);
+					renderer.addParticle(radius,Config.colors.start);
 			 
 			
 				} 
@@ -73,7 +74,8 @@
 								prt.getRotation(),
 								prt.getScaleX(),
 								prt.getScaleY(),
-								prt.getAlpha()
+								prt.getAlpha(),
+								prt.getColor()
 							);
 						
 						}
@@ -95,6 +97,8 @@
 				/** public interface */
 				this.setBlurRatio = changeBlur;
 				this.setFrequency = function(value){Config.frequency = value;};
+				this.setStartColor = function(value){Config.colors.start = value;};
+				this.setEndColor = function(value){Config.colors.end = value;};
 				
 				this.setMaxXOffset = function(value){ Config.maxXOffset = value;};
 				this.setMinXSpeed = function(value){ Config.minXSpeed = value;};

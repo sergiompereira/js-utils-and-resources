@@ -14,12 +14,6 @@
 		 var minRotationSpeed = 1.5; // In degrees per frame
 		 var rotationModifier = 2; // Fudges rotation per frame change into desired rate range
 		
-		 var randArray = new Array();
-		 var randElement = 0;
-		
-		//Class level init
-		initialiseRandArray();
-		 
 		 
 		Constructor = function(theXLocation, theYLocation, widthSize, heightSize, config){
 			
@@ -39,11 +33,20 @@
 			 var particleExpansionRate = 0;
 			 var fadeIn = true;
 			 var rotationRate = 0;
+			 // color is just a reference for external renderers,
+			 // because this class has no visual representation, is just a state.
+			 var color = '';
+			 
 			 var removed = false;
 			
 			 ////////////////////
-			 /** initialization */				
-
+			 /** initialization */	
+			 // apply randomness at the instance level
+			 // if it is set at class level (outside the constructor), a temporal pattern will be visible
+			 var randArray = new Array();
+			 var randElement = 0;
+			initialiseRandArray();
+			 
  
 			// Set the initial particle location as passed to our constructor
 			x =  randRange(theXLocation-Config.maxXOffset, theXLocation+Config.maxXOffset);
@@ -80,6 +83,11 @@
 			// Initially, we want our smoke to quickly fade in
 			fadeIn = true;
  
+			color = Config.colors.start;
+			if(Config.colors.start != Config.colors.end){
+				smp.math.ColorUtils.crossColors(Config.colors.start.substr(1), Config.colors.end.substr(1), 15, updateColor);
+			}
+			
 			// Because particles can be removed for being transparent or off the stage,
 			// as well as for being old, we need to keep track of whether the particle
 			// has been removed so we don't remove it twice (i..e for BOTH of these reasons).
@@ -184,7 +192,13 @@
 				}else{
 					// Subtract a small amount from our object's alpha so it fades out
 					alpha -= alphaDecay;
+					/*
+					if(alpha < particleTargetAlpha*0.6 && color != Config.colors.end){
+						color = Config.colors.end;
+					}
+					*/
 				}
+				
 				// Unbind the event listener and remove the particle from the stage as soon
 				// as the alpha reaches 0 (i.e. particle is completely transparent) OR the particle
 				// has risen off the top of the stage to try to eke out a little bit more performance!
@@ -194,6 +208,9 @@
 	 
 			}
 			
+			function updateColor(value){
+				color = "#"+value.r+value.g+value.b;
+			}
 			
 			/**
 			 * public properties
@@ -218,7 +235,37 @@
 			this.getScaleY = function(){return scaleY;};
 			this.getAlpha = function(){return alpha;};
 			this.getRotation = function(){return rotation;};
+			this.getColor = function(){return color;};
 			this.removed = function(){return removed;};
+			
+			
+			
+			/** utils */
+			
+			function initialiseRandArray()
+			{
+				var i;
+				for (i = 0; i < 1000; i++)
+				{
+					randArray[i] = Math.random();
+				}
+			};
+			
+			function getRandNumber()
+			{
+				if (randElement < 999) {
+					randElement++;
+				}
+				else
+				{
+					randElement = 0;
+				}
+				return randArray[randElement];
+			}
+			
+			function randRange(low, high) {
+				return (getRandNumber() * (high - low)) + low;
+			} 
 			
 		};
 		
@@ -227,31 +274,6 @@
 			
 		};
 		
-		
-		function initialiseRandArray()
-		{
-			var i;
-			for (i = 0; i < 1000; i++)
-			{
-				randArray[i] = Math.random();
-			}
-		};
-		
-		function getRandNumber()
-		{
-			if (randElement < 999) {
-				randElement++;
-			}
-			else
-			{
-				randElement = 0;
-			}
-			return randArray[randElement];
-		}
-		
-		function randRange(low, high) {
-			return (getRandNumber() * (high - low)) + low;
-		} 
 		
 		return Constructor;
 			
