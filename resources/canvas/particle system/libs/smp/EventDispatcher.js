@@ -1,11 +1,11 @@
 
 /**
  * @example: 
- * var evtD = new EventDispatcher();
- * evtD.dispatchEvent(EventDispatcher.events.DATA_LOADED, {prop1:"prop1", prop2:"prop2"});
+ * var evtD = new smp.utils.EventDispatcher();
+ * evtD.dispatchEvent("DATA_LOADED", {prop1:"prop1", prop2:"prop2"});
  *
 *	var _this = this;
-* 	evtD.addEventListener(events.MY_EVENT, mycallback);
+* 	evtD.addEventListener("DATA_LOADED", mycallback);
 *	function mycallback(evt){
 *		//'this' would point to the array element where the listeners are stored
 *		_this.followUp(evt.data);
@@ -13,15 +13,18 @@
  *
  *	//inheritance
  *	function myOwnDispatcher(){
- *		var eventDispatcher = new EventDispatcher();
- *		eventDispatcher.clone(this);
+ *		smp.utils.EventDispatcher.clone(this);
  *	}
  *
  *
  */
 
 (function(){
-	EventDispatcher = (function(){
+
+	smp.namespace("smp.utils.EventDispatcher");
+	
+	//constructor (instance creation)
+	smp.utils.EventDispatcher = (function(){
 
 		var Constructor;
 	
@@ -107,9 +110,14 @@
 		
 	}());
 	
+	smp.utils.EventDispatcher.clone = function(targetObj){
+		var eventDispatcher = new smp.utils.EventDispatcher();
+ 		eventDispatcher.clone(targetObj);
+		return targetObj;
+	}
 		
 	//static properties (actually constants)
-	EventDispatcher.events = {};
-	EventDispatcher.events.ENTER_FRAME = "ENTER_FRAME";
+	smp.utils.EventDispatcher.events = {};
+	smp.utils.EventDispatcher.events.ENTER_FRAME = "ENTER_FRAME";
 	
 }());

@@ -1,11 +1,13 @@
 (function(){
 	
-	EnterFrame = (function(){
+	smp.namespace("smp.utils.EnterFrame");
+	
+	//constructor (instance creation)
+	smp.utils.EnterFrame = (function(){
 		
-		if(!(!!document.createElement('canvas').getContext))
-		{
-			alert("O seu browser parece não suportar o elemento Canvas.");
-			return;
+		if(!smp.utils.EventDispatcher) {
+			smp.log('EnterFrame -> EventDispatcher needed.');
+			return false;
 		}
 		
 		//to render only when the browser actualy will redraw the screen
@@ -23,12 +25,13 @@
 			              };
 			    })();
 		
-		var eventDispatcher = new EventDispatcher();
+		var eventDispatcher = new smp.utils.EventDispatcher();
+		smp.utils.EventDispatcher.events.ENTER_FRAME = "ENTER_FRAME";
 		
 		//start main loop
 		(function animloop(time){
 			requestAnimationFrame(animloop, document);
-			eventDispatcher.dispatchEvent(EventDispatcher.events.ENTER_FRAME);
+			eventDispatcher.dispatchEvent(smp.utils.EventDispatcher.events.ENTER_FRAME);
 		  }());
 		
 		return {
