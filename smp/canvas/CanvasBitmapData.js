@@ -21,6 +21,7 @@
 		var _imageHeight;
 		var _originalBitmapData;
 		var _bitmapData;
+		var _colorUtils = smp.math.ColorUtils;
 		
 		//filters
 		var filters = [];
@@ -29,11 +30,19 @@
 		if(!!_canvas.getContext){
 			_context = _canvas.getContext("2d");
 		}else{
+			smp.log('CanvasBitmapData -> O browser não suporta canvas.');
 			return;
 		}
 		
 		
 		//private methods (made public below)
+		function _setBitmapData(canvas){
+			_bitmapData = _context.getImageData(0,0,canvas.width, canvas.height);
+			
+			//save original data:
+			_originalBitmapData = _cloneBitmapData(_bitmapData);
+		}
+		
 		function _setImage(image)
 		{
 			_imageWidth = image.width;
@@ -50,7 +59,16 @@
 		}
 		
 		function _getBitmapData(){
-			return _bitmapData;
+			if(_bitmapData){
+				console.log('a')
+				console.log(_bitmapData)
+				return _bitmapData;
+			}else if(_originalBitmapData) {
+				console.log('b')
+				return _originalBitmapData;
+			}else {
+				smp.log('CanvasBitmapData -> No BitmapData initialized.');
+			}
 		}
 		
 		
@@ -200,6 +218,24 @@
 			return data;
 		}
 		
+		function _setDataAtPoint(x,y, bmpData, color){
+			if(!bmpData || bmpData === "undefined"){
+				if(_bitmapData){
+					bmpData = _bitmapData;
+				}else{
+					bmpData = _originalBitmapData;
+				}
+			}
+			var id = y*bmpData.width*4+ x*4;
+			
+			var color = _colorUtils.getColorParts(color,10);
+			bmpData.data[id] = color.r;
+			bmpData.data[id+1] = color.g;
+			bmpData.data[id+2] = color.b;
+			bmpData.data[id+3] = 255;
+			
+		}
+		
 		//
 		
 		function _addFilter(filter, value){
@@ -298,12 +334,13 @@
 			//public properties (getters)
 
 			//public methods
-			
+			setBitmapData: _setBitmapData,
 			setImage: _setImage,
 			getBitmapData: _getBitmapData,
 			savePNGImage: _savePNGImage,
 			getDataAtPoint:_getDataAtPoint,
 			getPointAtIndex:_getPointAtIndex,
+			setDataAtPoint:_setDataAtPoint,
 			addFilter: _addFilter,
 			applyFilters:_applyFilters,
 			clearFilters:_clearFilters

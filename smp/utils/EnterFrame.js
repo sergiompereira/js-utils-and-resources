@@ -31,7 +31,7 @@
 		//start main loop
 		(function animloop(time){
 			requestAnimationFrame(animloop, document);
-			eventDispatcher.dispatchEvent(EventDispatcher.events.ENTER_FRAME);
+			eventDispatcher.dispatchEvent(smp.utils.EventDispatcher.events.ENTER_FRAME);
 		  }());
 		
 		return {
