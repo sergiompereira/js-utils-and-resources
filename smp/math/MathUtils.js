@@ -1,7 +1,7 @@
 /**
  * namespace pattern
- * @class NumberUtilities
- * @namespace smp.utils
+ * @class MathUtils
+ * @namespace smp.math
  */
 
 (function(){
@@ -174,36 +174,8 @@
 		return point;
 	}
 	
-	   /**
-     *  Round a number. By default the number is rounded to the nearest
-     *  integer. Specifying a roundToInterval parameter allows you to round
-     *  to the nearest of a specified interval.
-     *  @param  number             The number you want to round.
-     *  @param  nRoundToInterval   (optional) The interval to which you want to
-     *                             round the number. The default is 1.
-     *  @return                    The number rounded to the nearest interval.
-     */
-    smp.math.MathUtils.distance = function(x1, y1, x2, y2) 
-    {
-    	var dx = x1 - x2;
-		var dy = y1 - y2;
-		return Math.sqrt(dx*dx+dy*dy);
-    }
-    
-    smp.math.MathUtils.distance3 = function(x1, y1, z1, x2, y2, z2) 
-    {
-		var dxz = smp.math.MathUtils.distance(x1, z1, x2, z2);
-		var dy = y1 - y2;
-		return Math.sqrt(dxz*dxz+dy*dy);
-    }
 	
-	smp.math.MathUtils.degreeToRadian = function(deg) {
-		return deg * (Math.PI / 180) % (2*Math.PI);
-	}
-		
-	smp.math.MathUtils.radianToDegree = function(rad) {
-		return rad  * (180/Math.PI) % 360;
-	}
+    
 	
 	smp.math.MathUtils.cosineInterpolation = function(v1,v2,r){
 		var pi = 3.1415927;

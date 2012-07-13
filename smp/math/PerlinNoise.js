@@ -1,9 +1,9 @@
 (function(){	
 	
-	smp.namespace("smp.canvas.PerlinNoise");
+	smp.namespace("smp.math.PerlinNoise");
 	
 	//static class
-	smp.canvas.PerlinNoise = (function(){
+	smp.math.PerlinNoise = (function(){
 			
 		
 			var smoothed = false;

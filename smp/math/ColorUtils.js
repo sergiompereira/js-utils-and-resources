@@ -62,15 +62,15 @@
 		//internal function
 		function _getHexParts(hexvalue){
 			var len,r,g,b;
-			len = color.toString().length;
+			len = hexvalue.toString().length;
 			if(len <= 6){
-				b = color.substr(len-2);
-				g = color.substr(len-4,2);
+				b = hexvalue.substr(len-2);
+				g = hexvalue.substr(len-4,2);
 				r;
 				if(len==6){
-					r = color.substr(0,2);
+					r = hexvalue.substr(0,2);
 				}else{
-					r = color.substr(0,1);
+					r = hexvalue.substr(0,1);
 					r = '0'+r;
 				}
 				return {

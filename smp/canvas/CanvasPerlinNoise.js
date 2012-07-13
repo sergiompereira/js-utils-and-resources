@@ -14,7 +14,7 @@
 		//private properties
 		var Constructor;
 		//keep a reference to the static object
-		var perlinNoise = smp.canvas.PerlinNoise;
+		var perlinNoise = smp.math.PerlinNoise;
 		var canvasBmpData = new smp.canvas.CanvasBitmapData();
 		//private methods
 		
