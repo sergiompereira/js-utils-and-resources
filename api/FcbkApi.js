@@ -5,13 +5,18 @@
     		 
     	//static
     	var FB;
-    	
-     	var constructor; 
-     	//singleton ...?
+		
+    	//singleton
+		var instance;
      	
-     	if(constructor) return constructor;
+		var constructor; 
      	
+     	     	
      	constructor = function(fb,modules){
+				
+			if(instance) return instance;
+			instance  = this;
+		
      		FB = fb;
      		var _self = this;
      		var _modules = modules.split(',');
