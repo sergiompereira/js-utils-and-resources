@@ -6,7 +6,7 @@
 
 (function(){
 	
-	smp.namespace("smp.math.MathUtils");
+	smp.createNamespace("smp.math.MathUtils");
 	
 	//constructor (instance creation)
 	smp.math.MathUtils = (function()

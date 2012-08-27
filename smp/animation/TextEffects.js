@@ -6,7 +6,7 @@
 
 (function(){
 	
-	smp.namespace("smp.animation.TextEffects");
+	smp.createNamespace("smp.animation.TextEffects");
 	
 	//constructor (instance creation)
 	smp.animation.TextEffects = (function()

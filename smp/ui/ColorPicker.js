@@ -1,13 +1,13 @@
 (function(){
 	
-	smp.namespace("smp.canvas.ColorPicker");
+	smp.namespace("smp.ui.ColorPicker");
 	
 	/**
 	 * @see http://www.boostworthy.com/blog/?p=200
 	 */
 	
 	 
-	smp.canvas.ColorPicker = (function(){		
+	smp.ui.ColorPicker = (function(){		
 		
 		if(!smp.math.MathUtils || !smp.math.ColorUtils){
 			smp.log('ColorPicker -> MathUtils and ColorUtils needed.');
@@ -200,7 +200,7 @@
 	}());
 
 	
-	smp.canvas.ColorPicker.spectrum = smp.math.ColorUtils.spectrum;
+	smp.ui.ColorPicker.spectrum = smp.math.ColorUtils.spectrum;
 	
 
 	

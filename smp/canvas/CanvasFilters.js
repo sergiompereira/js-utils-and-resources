@@ -7,15 +7,23 @@
 
 (function(){
 	
-	smp.namespace("smp.canvas.CanvasFilters");
+	smp.createNamespace("smp.canvas.CanvasFilters");
 	smp.canvas.CanvasFilters = (function()
 	{
 		//private properties
 		var Constructor;
 		
-		//private methods
+		var tCanvas = document.createElement("canvas");
+		var tContext;
 		
-		//private
+		if(!!tCanvas.getContext){
+			tContext = tCanvas.getContext("2d");
+		}else{
+			smp.log('CanvasFilters -> O browser não suporta canvas.');
+			return;
+		}
+		//private shared methods
+		
 		function _saturate(originalImageData, value){
 			
 			var newImageData = _createEmptyImageData(originalImageData.width, originalImageData.height);
@@ -24,31 +32,7 @@
 			var total = originalImageData.data.length;
 			for(i = 0; i<total; i+=4){
 				
-				var colors = {};
-				colors.r = originalImageData.data[i];
-				colors.g = originalImageData.data[i+1];
-				colors.b = originalImageData.data[i+2];
-				colors.a = originalImageData.data[i+3];
-
-				var rlum = 0.3;
-				var glum = 0.59;
-				var blum = 0.11;
-			
-				var dest = {};
-				
-				dest.r = ((rlum + (1.0 - rlum) * saturation) * colors.r) + ((glum + -glum * saturation) * colors.g) + ((blum + -blum * saturation) * colors.b);
-				dest.g = ((rlum + -rlum * saturation) * colors.r) + ((glum + (1.0 - glum) * saturation) * colors.g) + ((blum + -blum * saturation) * colors.b);
-				dest.b = ((rlum + -rlum * saturation) * colors.r) + ((glum + -glum * saturation) * colors.g) + ((blum + (1.0 - blum) * saturation) * colors.b);
-				dest.a = colors.a;
-				
-				//grayscale
-				//dest.r = dest.g = dest.b = (colors.r+colors.g+colors.b)/3.0;
-				
-		
-				newImageData.data[i] = dest.r;
-				newImageData.data[i+1] = dest.g;
-				newImageData.data[i+2] = dest.b;
-				newImageData.data[i+3] = dest.a;
+				_setColor(newImageData,i,_saturateFunction(_copyColor(originalImageData,i), saturation));
 				
 			}
 			return newImageData;
@@ -62,23 +46,7 @@
 			var total = originalImageData.data.length;
 			for(i = 0; i<total; i+=4){
 				
-				var colors = {};
-				colors.r = originalImageData.data[i];
-				colors.g = originalImageData.data[i+1];
-				colors.b = originalImageData.data[i+2];
-				colors.a = originalImageData.data[i+3];
-			
-				var dest = {};
-				
-				dest.r = colors.r * brightness;
-				dest.g = colors.g * brightness;
-				dest.b = colors.b * brightness;
-				dest.a = colors.a;
-				
-				newImageData.data[i] = dest.r;
-				newImageData.data[i+1] = dest.g;
-				newImageData.data[i+2] = dest.b;
-				newImageData.data[i+3] = dest.a;
+				_setColor(newImageData,i,_brightenFunction(_copyColor(originalImageData,i), brightness));
 				
 			}
 			return newImageData;
@@ -92,26 +60,30 @@
 			var total = originalImageData.data.length;
 			for(i = 0; i<total; i+=4){
 				
-				var colors = {};
-				colors.r = originalImageData.data[i];
-				colors.g = originalImageData.data[i+1];
-				colors.b = originalImageData.data[i+2];
-				colors.a = originalImageData.data[i+3];
-			
-				var dest = {};
-				
-				dest.r = ((colors.r - 125)*contrast)+ 125;
-				dest.g = ((colors.g - 125)*contrast)+ 125;
-				dest.b = ((colors.b - 125)*contrast)+ 125;
-				dest.a = colors.a;
-				
-				newImageData.data[i] = dest.r;
-				newImageData.data[i+1] = dest.g;
-				newImageData.data[i+2] = dest.b;
-				newImageData.data[i+3] = dest.a;
+				_setColor(newImageData,i,_contrastFunction(_copyColor(originalImageData,i), contrast));
 				
 			}
 			return newImageData;
+		}
+		
+		function _convolute(originalImageData, matrix ){
+			
+			//matrix should have a even number of items and their square root should be an integer
+			var side = Math.sqrt(matrix.length);
+			
+			var newImageData = _createEmptyImageData(originalImageData.width, originalImageData.height);
+			var i,total = originalImageData.data.length;
+			for(i = 0; i<total; i+=4){
+				_setColor(newImageData,i,_computeMatrix(_copyColor(originalImageData,i),i));
+				
+			}
+			
+			function _computeMatrix(color,i){
+				
+			}
+			
+			return newImageData;
+			
 		}
 		
 		function _getFilter(value){
@@ -133,6 +105,12 @@
 		
 		function _saturateFunction(obj, saturation)
 		{
+
+			//grayscale
+			//dest.r = dest.g = dest.b = (colors.r+colors.g+colors.b)/3.0;
+			//or:
+			//dest.r = dest.g = dest.b =  = 0.2126*r + 0.7152*g + 0.0722*b;
+			
 			var rlum = 0.3;
 			var glum = 0.59;
 			var blum = 0.11;
@@ -170,10 +148,29 @@
 			
 			return dest;
 		}
+	
+		
+		//utils
+		function _copyColor(bmpData,index){
+			var color = {};
+			
+			color.r = bmpData.data[index];
+			color.g = bmpData.data[index+1];
+			color.b = bmpData.data[index+2];
+			color.a = bmpData.data[index+3];
+			
+			return color;
+		}
+		
+		function _setColor(bmpData,index,color){
+			bmpData.data[index] = color.r;
+			bmpData.data[index+1] = color.g;
+			bmpData.data[index+2] = color.b;
+			bmpData.data[index+3] = color.a;
+		}
 		
 		function _createEmptyImageData(w,h){
-			var tCanvas = document.createElement("canvas");
-			return tCanvas.getContext("2d").createImageData(w,h);
+			return tContext.createImageData(w,h);
 		}
 		
 		//

@@ -80,27 +80,29 @@
 	smp.math.ColorUtils.serializeColor = function(color,to){
 		if(typeof color == "string"){
 			if(color.substr(0,1)=="#") color = color.substr(1);
-		
-			var hexParts = _getHexParts(color.toString(16));
-			if(to == null || to == undefined) to = 16;
-			if(to == 16){
-				return {
-					r: hexParts.r,
-					g: hexParts.g,
-					b: hexParts.b
-				};
-			}else if(to == 10){
-				return {
-					r: parseInt(hexParts.r,16),
-					g: parseInt(hexParts.g,16),
-					b: parseInt(hexParts.b,16)
-				};
-			}else if(to == 2){
-				//to be continued
-			}
+		}else if(typeof color != "number"){
+			return color;
+		}
+	
+		var hexParts = _getHexParts(color.toString(16));
+		if(to == null || to == undefined) to = 16;
+		if(to == 16){
+			return {
+				r: hexParts.r,
+				g: hexParts.g,
+				b: hexParts.b
+			};
+		}else if(to == 10){
+			return {
+				r: parseInt(hexParts.r,16),
+				g: parseInt(hexParts.g,16),
+				b: parseInt(hexParts.b,16)
+			};
+		}else if(to == 2){
+			//to be continued
 		}
 		
-		return color;
+	
 		
 		//internal function
 		function _getHexParts(hexvalue){
@@ -126,6 +128,7 @@
 			}
 		}
 	}
+	
 	
 	/**
 	*	Adds zeros to the left to match the specified length
