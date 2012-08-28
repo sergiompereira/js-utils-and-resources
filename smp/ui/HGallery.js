@@ -66,6 +66,9 @@
 			this.getNumPages = function(){
 				return pages;
 			}
+			this.getCurrentPage = function(){
+				return state+1;
+			}
 			this.update = function(){
 				build();
 			}
