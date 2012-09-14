@@ -30,7 +30,7 @@
 		
 		Constructor = function(radius,thickness,color,numberWedges,gutter,rotationTimeSpan,parent)
 		{
-			var svgDoc = smp.graphics.Svg.createSVG();
+			var svgDoc = smp.graphics.Svg.createSVG(radius*2,radius*2);
 			
 			if(parent) parent.appendChild(svgDoc);
 			if(thickness > radius) thickness = radius;
