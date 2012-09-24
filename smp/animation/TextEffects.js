@@ -97,63 +97,66 @@
 			element.innerHTML = "";
 			
 			var interval = duration / (maxSentenceLength / numberCharactersIncrement);
-			
 	
-			var i = 0,j,sentences = [],textProg = [],txtFields=[];
+			var i = 0,j,sentences = [];
+	
+			//se houver quebras de linha, ignora o valor maxSentenceLength
+			text = text.replace(/<br\s*\/?\>/gi, "<br>");
+			text = text.replace("\\n", "<br>");
+			var breakposbr = text.search("<br>");
 			
-			//constrói as linhas, garantindo que a quebra é feita num espaço branco:
-			while (i < text.length) {
-				
-				var sentence = text.substr(i, maxSentenceLength);
-				var breakposn = sentence.search("\\n");
-				var breakposbr = sentence.search("<br/>");
-				var breakposbr2 = sentence.search("<br>");
-				
-				if (breakposbr >= 0) 
+			var sentence,temptext;
+			if(breakposbr >= 0){
+				temptext = text.substr(0);
+				while (breakposbr >= 0) 
 				{
-					sentence = sentence.substr(0, breakposbr - 1);
+					sentence = temptext.substr(0, breakposbr - 1);
 					sentences.push(sentence);
 					i += sentence.length + 5;
-				}else
-				if (breakposbr2 >= 0) 
-				{
-					sentence = sentence.substr(0, breakposbr2 - 1);
-					sentences.push(sentence);
-					i += sentence.length + 6;
-				}else
-				if (breakposn >= 0) 
-				{
-					sentence = sentence.substr(0, breakposn - 1);
-					sentences.push(sentence);
-					i += sentence.length + 2;
+					temptext = text.substr(i);
+		
+					breakposbr = temptext.search("<br>");
+				}
+				sentences.push(temptext);
+				
+			}else{
+				
+				if(text.length > maxSentenceLength){
 					
-				}else
-				if (sentence.length >= maxSentenceLength)
-				{
-					j = sentence.length - 1;
-					
-					while (!isWhitespace(sentence.charAt(j))) 
-					{
-						if (j > 0) {
-							j--;
-						}else {
-							break;
+					//constrói as linhas, garantindo que a quebra é feita num espaço branco:
+					while (i < text.length) {
+						sentence = text.substr(i, maxSentenceLength);
+						j = sentence.length - 1;
+						
+						while (!isWhitespace(sentence.charAt(j))) 
+						{
+							if (j > 0) {
+								j--;
+							}else {
+								break;
+							}
 						}
-					}
-					
-					sentence = sentence.substr(0, j);
-					sentences.push(sentence);
-					i += (j + 1);
-				}
-				else
-				{
-					sentences.push(sentence);
-					i = text.length;
-				}
+						
+						if(j>0){
+							sentence = sentence.substr(0, j);
+							i += (j + 1);
+						}else{
+							i = text.length;
+						}
 
+						sentences.push(sentence);
+						
+						
+
+					}
+				}
+				
 			}
 			
-			var posChars = [];
+			
+			
+			
+			var posChars = [],textProg = [],txtFields=[];
 			
 			for (i = 0; i < sentences.length; i++) 
 			{
