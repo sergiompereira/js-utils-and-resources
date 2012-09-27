@@ -6,7 +6,7 @@
 
 (function(){
 	
-	smp.namespace("smp.math.Geometry2D");
+	smp.createNamespace("smp.math.Geometry2D");
 	
 	//constructor (instance creation)
 	smp.math.Geometry2D = (function()
@@ -130,24 +130,24 @@
 			if (propref > 1) {
 				//se horizontal
 				if (prop >= propref) {
-					//horizontal e mais largo na  proporção
+					//horizontal e mais largo na  proporï¿½ï¿½o
 					outputSize.width = maxSize.width;
 					outputSize.height = inputSize.width / prop;
 				}else {
 					//((prop < propref && prop > 1) || prop <= 1)
-					//horizontal mas mais estreito na proporção ou vertical ou quadrado
+					//horizontal mas mais estreito na proporï¿½ï¿½o ou vertical ou quadrado
 					outputSize.width  = inputSize.height * prop;
 					outputSize.height =  maxSize.height;
 				}
 			}else{
 				//se vertical ou quadrado
 				if (prop <= propref) {
-					//vertical e mais alto na  proporção
+					//vertical e mais alto na  proporï¿½ï¿½o
 					outputSize.width = inputSize.height * prop;
 					outputSize.height =  maxSize.height;
 				}else{
 					//((prop > propref && prop < 1) || prop >= 1)
-					//vertical mas mais baixo na proporção ou horizontal ou quadrado
+					//vertical mas mais baixo na proporï¿½ï¿½o ou horizontal ou quadrado
 					outputSize.width = maxSize.width;
 					outputSize.height = inputSize.width / prop;
 				}

@@ -6,13 +6,20 @@
 	{
 		//private properties
 		var Constructor;
+		//dependencies
+		var Geometry2D = smp.math.Geometry2D;
+		var BitmapDataUtility = smp.bitmap.BitmapDataUtility;
 		
 		Constructor = function(filtername)
 		{
 			
+			var _bitmapDataUtil = new BitmapDataUtility();	
+			var _auxBitmapDataUtil = new BitmapDataUtility();
+			
 			var _filterName = filtername;
 			var _filterType = "";
 			var _filterPointFnc, _filterAreaFnc;
+			
 			
 			switch(_filterName){
 				case "saturation":
@@ -65,6 +72,10 @@
 					_filterType = "area";
 					_filterAreaFnc = _convolute;
 					break;
+				case "stretch":
+					_filterType = "area";
+					_filterAreaFnc = _stretch;
+					break;
 				default:
 					throw new Error("BitmapFilter->constructor: No filter name specified.");
 			}
@@ -105,6 +116,8 @@
 			this.applyToPoint = _applyToPoint;
 			this.name = _name;
 			this.type = _type;
+			this.bitmapDataUtil = _bitmapDataUtil;
+			this.auxBitmapDataUtil = _auxBitmapDataUtil;
 			
 			
 			
@@ -123,13 +136,14 @@
 		/** filters methods */
 		function _saturate(originalImageData, newData,params){
 			
-			var i;
+			var i,self=this;
 			var total = originalImageData.data.length;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
 			if(params != 1){
 				for(i = 0; i<total; i+=4){
-				
-					_setColor(newData,i,_saturateFunction(_copyColor(originalImageData,i), params));
-					
+					self.auxBitmapDataUtil.setColor(i,_saturateFunction(self.bitmapDataUtil.getColor(i), params));
 				}
 				return newData;
 			}else{
@@ -142,13 +156,14 @@
 		
 		function _brighten(originalImageData, newData,params){
 			
-			var i;
+			var i,self=this;
 			var total = originalImageData.data.length;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
 			if(params != 1){
 				for(i = 0; i<total; i+=4){
-					
-					_setColor(newData,i,_brightenFunction(_copyColor(originalImageData,i), params));
-					
+					self.auxBitmapDataUtil.setColor(i,_brightenFunction(self.bitmapDataUtil.getColor(i), params));					
 				}
 				return newData;
 			}else{
@@ -158,13 +173,14 @@
 		
 		function _contrast(originalImageData, newData,params){
 			
-			var i;
+			var i,self=this;
 			var total = originalImageData.data.length;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
 			if(params != 1){
 				for(i = 0; i<total; i+=4){
-					
-					_setColor(newData,i,_contrastFunction(_copyColor(originalImageData,i), params));
-					
+					self.auxBitmapDataUtil.setColor(i,_contrastFunction(self.bitmapDataUtil.getColor(i), params));	
 				}
 				return newData;
 			}else{
@@ -174,13 +190,14 @@
 		
 		function _channel(originalImageData, newData,channel, params){
 			
-			var i;
+			var i,self=this;
 			var total = originalImageData.data.length;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
 			if(params != 1){
 				for(i = 0; i<total; i+=4){
-					
-					_setColor(newData,i,_channelFunction(_copyColor(originalImageData,i), channel, params));
-					
+					self.auxBitmapDataUtil.setColor(i,_channelFunction(self.bitmapDataUtil.getColor(i), params));
 				}
 				return newData;
 			}else{
@@ -232,7 +249,7 @@
 			}
 			
 			if(matrix){
-				return _convolute(originalImageData,newData, matrix);
+				return _convolute.call(this,originalImageData,newData, matrix);
 			}else{
 				return originalImageData;
 			}
@@ -253,7 +270,7 @@
 						    0,  0,  0, -2,  0,
 						    0,  0,  0,  0, -1];
 			
-			return _convolute(originalImageData,newData, matrix);
+			return _convolute.call(this,originalImageData,newData, matrix);
 		}
 		
 		function _sharpen(originalImageData, newData,params){
@@ -282,7 +299,7 @@
 			
 			
 			
-			return _convolute(originalImageData,newData, matrix);
+			return _convolute.call(this,originalImageData,newData, matrix);
 		
 			
 			
@@ -315,7 +332,7 @@
 			
 			
 			
-			return _convolute(originalImageData,newData, matrix);
+			return _convolute.call(this,originalImageData,newData, matrix);
 		
 			
 		}
@@ -325,6 +342,9 @@
 			if(factor == undefined) factor = 1;
 			if(bias == undefined) bias = 0;
 			
+			var self = this;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
 			
 			//matrix should have a even number of items and their square root should be an integer
 			var side = Math.sqrt(matrix.length),
@@ -363,7 +383,7 @@
 			for(x=0; x<imgw; x++){
 				for(y=0; y<imgh; y++){
 					var index = y*imgw*4+ x*4;					
-					_setColor(newData,index, _computeMatrix(x,y));
+					self.auxBitmapDataUtil.setColor(index,_computeMatrix(x,y));
 				}
 			}
 			
@@ -383,7 +403,7 @@
 						if(nimgx>imgw-1) nimgx -= (nimgx - (imgw-1));
 						if(nimgy>imgh-1) nimgy -= (nimgy - (imgh-1));
 						
-						color = _copyColor(originalImageData, nimgy*imgw*4+ nimgx*4);
+						color = self.bitmapDataUtil.getColor(nimgy*imgw*4+ nimgx*4);
 		
 						psum.r+=(color.r*value);
 						psum.g+=(color.g*value);
@@ -406,20 +426,78 @@
 			
 		}
 		
+		/**
+		 * displacementCoeff: 1 - ...20... - 200
+		 * radialCoeff: 1 - ...50... - 200
+		 */
+		
+		function _stretch(originalImageData, newData, origin, dest, displacementCoeff, radialCoeff){
+		
+			
+			var i;
+			var total = originalImageData.data.length;
+			var self = this;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
+			// displacement: the vector between the original position and the new position (destination)
+            var displacement = {x:dest.x - origin.x, y:dest.y - origin.y};
+			// correctedDisplacement decreases in proportion to displacement increase (f(x) = 1/(1+x/a))
+            //      and equals to displacement value when this reaches 0 (the origin is never actually moved to destination, but is somewhere along the way)
+            //      Consider this as a sort of friction...
+            var  correctedDisplacement = {x:0,y:0};
+            correctedDisplacement.x = (displacement.x / (1.0 + Math.abs(displacement.x) / displacementCoeff));
+            correctedDisplacement.y = (displacement.y / (1.0 + Math.abs(displacement.y) / displacementCoeff));
+           
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
+			/*for(i = 0; i<20; i+=4){
+				_setColor(newData,i,_stretchPoint(bitmapDataUtil.indexToPoint(i)));	
+			}*/
+			
+			var x,y,w = originalImageData.width,h = originalImageData.height;
+			for(y = 0; y<h; y++){
+				for(x = 0; x<w; x++){
+					self.auxBitmapDataUtil.setColor(self.bitmapDataUtil.pointToIndex(x,y),_stretchPoint({x:x,y:y}));	
+				}
+			}
+			return newData;
+			
+			function _stretchPoint(point){
+				
+	            // distance: the distance (vector length) between the current pixel and the origin
+	            var distance = Geometry2D.distance(origin.x,origin.y,point.x,point.y);
+	        
+	            // the correctedDisplacement is further changed by a factor that decreases in proportion to distance increase
+	            //      If the current pixel is over the origin (distance equals 0) than no change occurs.
+	            var relativeDisplacement = (1.0 + distance / radialCoeff);
+	            
+	            var pos = {x:point.x - correctedDisplacement.x / relativeDisplacement, y:point.y - correctedDisplacement.y / relativeDisplacement};
+
+	            return self.bitmapDataUtil.bilinearInterpolation(pos);
+			}
+			
+			
+		}
+		
 		
 		/** per pixel algorithms */
 		function _saturateFunction(obj, params)
 		{
 
-			//grayscale
+				//grayscale
 			//dest.r = dest.g = dest.b = (colors.r+colors.g+colors.b)/3.0;
-			//or:
+			//or REC 709
 			//dest.r = dest.g = dest.b =  = 0.2126*r + 0.7152*g + 0.0722*b;
+			//or REC 601
+			//dest.r = dest.g = dest.b =  = 0.3*r + 0.59*g + 0.11*b;
+			//in any case, the coefficients sum to 1.
 			
 			var  saturation = params;
-			var rlum = 0.3;
-			var glum = 0.59;
-			var blum = 0.11;
+			var rlum = 0.2126;
+			var glum = 0.7152;
+			var blum = 0.0722;
+			
 		
 			var dest = {};
 			
@@ -437,9 +515,28 @@
 			
 			var dest = {};
 			
-			dest.r = obj.r * brightness;
-			dest.g = obj.g * brightness;
-			dest.b = obj.b * brightness;
+			if(brightness < 1){
+					dest.r = brightenColor(obj.r);
+					dest.g = brightenColor(obj.g);
+				dest.b = brightenColor(obj.b);
+			}else{
+				dest.r = darkenColor(obj.r);
+				dest.g = darkenColor(obj.g);
+				dest.b = darkenColor(obj.b);
+			}
+			
+			function brightenColor(color){
+				return color + gaussian(color,125,100)* (brightness-1);
+			}
+			function darkenColor(color){
+				return color + gaussian(color,125,50)* (brightness-1);
+			}
+			function gaussian(value, center, amplitude){
+				var a = value, b = center, c = amplitude;
+				//curva gaussiana, de modo que os pretos e brancos ficam quase inalterados.
+				return a*Math.pow(Math.E, -(Math.pow(value-b,2)/(2*Math.pow(c,2))));
+			}
+
 			dest.a = obj.a;
 			
 			dest = _range(dest);
@@ -453,9 +550,17 @@
 			
 			var dest = {};
 			
-			dest.r = ((obj.r - 125)*contrast)+ 125;
-			dest.g = ((obj.g - 125)*contrast)+ 125;
-			dest.b = ((obj.b - 125)*contrast)+ 125;
+			dest.r = contrastColor(obj.r);
+			dest.g = contrastColor(obj.g);
+			dest.b = contrastColor(obj.b);
+			
+			function contrastColor(color){
+				//formula : diferença de luminância / luminância média
+				//ou seja, o desvio da média a dividir pela média.
+				//http://en.wikipedia.org/wiki/Contrast_(formula)#Formula
+				return ((color - 125)*contrast)+ 125;
+			}
+			
 			dest.a = obj.a;
 			
 			dest = _range(dest);
@@ -493,24 +598,6 @@
 
 		
 		
-		/** utils */
-		function _copyColor(bmpData,index){
-			var color = {};
-			
-			color.r = bmpData.data[index];
-			color.g = bmpData.data[index+1];
-			color.b = bmpData.data[index+2];
-			color.a = bmpData.data[index+3];
-			
-			return color;
-		}
-		
-		function _setColor(bmpData,index,color){
-			bmpData.data[index] = color.r;
-			bmpData.data[index+1] = color.g;
-			bmpData.data[index+2] = color.b;
-			bmpData.data[index+3] = color.a;
-		}
 		function _range(color){
 			if(color.r>255)color.r = 255; else if(color.r<0)color.r = 0;
 			if(color.g>255)color.g = 255; else if(color.g<0)color.g = 0;

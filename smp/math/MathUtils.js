@@ -175,14 +175,45 @@
 	}
 	
 	
-    
+	/**
+	 * If only three arguments are provided, consider the third as the ratio
+	 * otherwise, compute the ratio from the last three arguments, 
+	 * being the third argument the current x position at which to interpolate the function
+	 */
+    smp.math.MathUtils.linearInterpolation = function(y1,y2,rORxk,x1,x2){
+    	var r;
+    	if(arguments.length == 3){
+    		r = rORxk;
+    	}else if(arguments.length == 5){
+    		r = (rORxk-x1)/(x2-x1);
+    	}
+    	
+    	return y1*(1-r) + y2*r;
+
+    }
 	
+    
+    /**
+     * y01: o valor da função antes de x1, ou em x1-(x2-x1)
+     * y20: o valor da função depois de x2, ou em x2+(x2-x1)
+     */
+    smp.math.MathUtils.cubicInterpolation = function(xk,x1,x2,y01,y1,y2,y20){
+		
+    	var r = (xk-x1)/(x2-x1);
+		var P = (y20 - y2) - (y01 - y1);
+		var Q = (y01 - y1) - P;
+		var R = y2 - y01;
+		var S = y1;
+		return P*Math.pow(3,r) + Q*Math.pow(2,r) + R*r + S;
+	}
+    
 	smp.math.MathUtils.cosineInterpolation = function(v1,v2,r){
 		var pi = 3.1415927;
 		var ft = r * pi;
 		var f = (1 - Math.cos(ft)) * 0.5;
 		return v1*(1-f) + v2*f;
 	}
+	
 	
 
 }());
