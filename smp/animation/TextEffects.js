@@ -57,13 +57,17 @@
 		 */
 		Constructor.prototype.flowText = function(element, text, numberChar, duration) {
 				
-			element.innerHTML = text;
+			clearEffects(element);
+			element.innerHTML = "";
 			
 			var totalChar = text.length;
 			var posChar = 0;
 			var textProg = "";
 			var interval = duration / (totalChar / numberChar);
-
+			if(interval < 1) {
+				interval = 1;
+				numberChar = totalChar/duration;
+			}
 			var timer = setInterval(incrementText, interval);
 			
 			//_calls.push({target:textField, timer:timer});
@@ -82,8 +86,7 @@
 
 				} else {
 					clearInterval(timer);
-					
-					//clearCall(textField, timer);
+					clearEffects(element);
 					
 				}
 				posChar += numberChar+1;

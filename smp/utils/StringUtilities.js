@@ -6,7 +6,7 @@
 
 (function(){
 	
-	smp.namespace("smp.geom.StringUtilities");
+	smp.createNamespace("smp.utils.StringUtilities");
 	
 	//constructor (instance creation)
 	smp.utils.StringUtilities = (function()
@@ -37,12 +37,12 @@
 
 	smp.utils.StringUtilities.trim = function(str)
 	{
-		var l=0; var r=s.length -1;
-		while(l < s.length && s[l] == ' ')
+		var l=0; var r=str.length -1;
+		while(l < str.length && str[l] == ' ')
 		{	l++; }
-		while(r > l && s[r] == ' ')
+		while(r > l && str[r] == ' ')
 		{	r-=1;	}
-		return s.substring(l, r+1);
+		return str.substring(l, r+1);
 	}
 	
 	smp.utils.StringUtilities.isWhitespace = function(ch) 
@@ -197,4 +197,43 @@
 
 	}
 
+	smp.utils.StringUtilities.removeAccents = function(str){
+		
+		var nstr = str;
+		
+		
+		var MAPPED_CONVERTIONS = [
+			
+			["a", "á","à","â","ã","ä"],
+			["e", "é","è","ê","ë"],
+			["o", "ó","ò","ô","õ","ö"],
+			["i", "í","ì","î","ï"],
+			["u", "ú","ù","û","ü"],
+			["c","ç"],
+			["n", "ñ"],
+			["y", "ý","ÿ"],
+			["A", "Á","Á","Â","Ã","Ä"],
+			["E", "É","È","Ê","Ë"],
+			["O", "Ó","Ò","Ô","Õ","Ö"],
+			["I", "Í","Ì","Î","Ï"],
+			["U", "Ú","Ù","Û","Ü"],
+			["C","Ç"],
+			["N", "Ñ"],
+			["Y", "Ý"]
+		
+		];
+		
+		var i,j,accent,noaccent;
+		for(i=0; i<MAPPED_CONVERTIONS.length; i++){
+			noaccent = MAPPED_CONVERTIONS[i][0];
+			for(j=1;j<MAPPED_CONVERTIONS[i].length;j++){
+				accent = MAPPED_CONVERTIONS[i][j];
+				while(nstr.indexOf(accent) >= 0){
+					nstr = nstr.replace(accent,noaccent);
+				}
+			}
+		}
+		
+		return nstr;
+	}
 }());
