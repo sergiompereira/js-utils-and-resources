@@ -140,6 +140,8 @@
 			return (valor - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
 	}
 	
+	smp.math.MathUtils.normalize = smp.math.MathUtils.scale;
+	
 	/**
 	 * Considering a matrix with matrixHCount elements in each row,
 	 * and an array that would store each of the matrix elements in a left to right and top bottom order,

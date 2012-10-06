@@ -275,6 +275,149 @@
 				}
 			}
 			
+			//grid effect to be solved ... 
+            //(the interpolation is brighter then the original)
+            //http://en.wikipedia.org/wiki/Lanczos_resampling
+            //http://software.intel.com/sites/products/documentation/hpc/ipp/ippi/ippi_appendices/ippi_appB_LanczosInterpolation.html
+            
+			function _LanczosResampling(point,a){
+				
+				if(!a) a = 3;
+				
+				var x = point.x,
+					xf = Math.floor(x),
+					y = point.y,
+					yf = Math.floor(y),
+					dx = x-xf,
+					dy = y-yf,
+					inix = xf-a+1,
+					iniy = yf-a+1,
+					endx = xf+a,
+					endy = yf+a,
+					xi,yj,
+					color,ncolor,xcolor;
+					
+				if(dx == 0 && dy == 0){ 
+					return _getColorAt(x,y);
+				}else if(dx == 0){
+					ncolor = {r:0,g:0,b:0,a:255};
+					for (yj = iniy; yj <= endy; yj++) {
+						color = _getColorAt(xf,yj);
+						
+						ncolor.r += _LanczosFilter(y - yj, a)*color.r;
+						ncolor.g += _LanczosFilter(y - yj, a)*color.g;
+						ncolor.b += _LanczosFilter(y - yj, a)*color.b;
+					}
+				}else if(dy == 0){
+					ncolor = {r:0,g:0,b:0,a:255};
+					for (xi = inix; xi <= endx; xi++) {
+						color = _getColorAt(xi,yf);
+						
+						ncolor.r += _LanczosFilter(x - xi, a) * color.r;
+						ncolor.g += _LanczosFilter(x - xi, a) * color.g;
+						ncolor.b += _LanczosFilter(x - xi, a) * color.b;
+					}
+				}else{
+					var Ix = [],
+						I = [];
+						
+					for (yj = iniy; yj <= endy; yj++) {
+						ncolor = {r:0,g:0,b:0,a:255};
+						for (xi = inix; xi <= endx; xi++) {
+							
+							color = _getColorAt(xi,yj);
+							ncolor.r += _LanczosFilter(x - xi, a) * color.r;
+							ncolor.g += _LanczosFilter(x - xi, a) * color.g;
+							ncolor.b += _LanczosFilter(x - xi, a) * color.b;
+							
+						}
+						Ix.push(ncolor);
+					}
+					
+					//reset
+					ncolor = {r:0,g:0,b:0,a:255};
+					
+					for (yj = iniy; yj <= endy; yj++) {
+						xcolor = Ix.shift();
+						
+						ncolor.r += _LanczosFilter(y - yj, a)*xcolor.r;
+						ncolor.g += _LanczosFilter(y - yj, a)*xcolor.g;
+						ncolor.b += _LanczosFilter(y - yj, a)*xcolor.b;
+					}
+				}
+				
+				return ncolor;
+			}
+			
+			function _LanczosFilter(t,a){
+				if (t < 0){
+				      t = -t;
+				}
+				
+				var tp = Math.PI*t;
+				if (t < a && t!=0){
+				      return _clean(a*Math.sin(tp)*Math.sin(tp/a) / (tp*tp));
+				}else{
+				      return 0;
+				}
+				
+				
+				/*function sinc(x){
+					x = x * Math.PI;
+
+				   	if ((x < 0.01) && (x > -0.01)){
+				      return 1 + x*x*(-1/6 + x*x*1/120);
+					}
+				   	
+					return Math.sin(x) / x;
+				   
+				}*/
+			}
+			
+			
+			/**
+			 * 
+			 * @param {ImageData} originalImageData
+			 * @param {ImageData} newData			: it assumes to be a factor*size of the original ImageData.
+			 * @return ImageData
+			 */
+			function _scale(originalImageData, newData, interpolationType){
+				
+				var total = newData.data.length,
+				 	width = newData.width,
+				 	height = newData.height,
+					factor = width/originalImageData.width,
+					bmpUtil = new smp.bitmap.BitmapDataUtility(originalImageData),
+					newBmpUtil = new smp.bitmap.BitmapDataUtility(newData),
+					interpolationFnc;
+				
+				switch(interpolationType){
+					case "nearest":
+					 	_interpolationFnc = bmpUtil.nearestNeighbor;
+					break;
+					case "bicubic":
+						_interpolationFnc = bmpUtil.bicubicInterpolation;
+					break;
+					case "lanczos":
+						_interpolationFnc = bmpUtil.LanczosResampling;
+					break;
+					default:
+						//linear
+						 _interpolationFnc = bmpUtil.bilinearInterpolation;
+				}
+				
+				var x,y,ncolor;	
+						
+				for(y = 0; y<height; y++){	
+					for(x = 0; x<width; x++){
+						ncolor = _interpolationFnc({x:x/factor , y:y/factor})
+						newBmpUtil.setColor(newBmpUtil.pointToIndex(x,y), ncolor);
+					}		
+				}
+				
+				return newData;
+			}
+			
 			
 			
 			/**
@@ -376,45 +519,23 @@
 				};
 			}
 			
+			
+			
 			/**
-			 * 
-			 * @param {ImageData} originalImageData
-			 * @param {ImageData} newData			: it assumes to be a factor*size of the original ImageData.
-			 * @return ImageData
+			 * utils
 			 */
-			function _scale(originalImageData, newData, interpolationType){
+			
+			function _clean(t){
 				
-				var total = newData.data.length,
-				 	width = newData.width,
-				 	height = newData.height,
-					factor = width/originalImageData.width,
-					bmpUtil = new smp.bitmap.BitmapDataUtility(originalImageData),
-					newBmpUtil = new smp.bitmap.BitmapDataUtility(newData),
-					interpolationFnc;
-				
-				switch(interpolationType){
-					case "nearest":
-					 	_interpolationFnc = bmpUtil.nearestNeighbor;
-					break;
-					case "bicubic":
-						_interpolationFnc = bmpUtil.bicubicInterpolation;
-					break;
-					default:
-						//linear
-						 _interpolationFnc = bmpUtil.bilinearInterpolation;
+				if(t<0.0000125){
+					return 0;
 				}
-				
-				var x,y,ncolor;	
-						
-				for(y = 0; y<height; y++){	
-					for(x = 0; x<width; x++){
-						ncolor = _interpolationFnc({x:x/factor , y:y/factor})
-						newBmpUtil.setColor(newBmpUtil.pointToIndex(x,y), ncolor);
-					}		
-				}
-				
-				return newData;
+				return t;
 			}
+			
+			/**
+			 * END : utils
+			 */
 			
 			
 			//public interface
@@ -428,11 +549,13 @@
 			this.nearestNeighbor = _nearestNeighbor;
 			this.bilinearInterpolation = _bilinearInterpolation;
 			this.bicubicInterpolation = _bicubicInterpolation;
+			this.LanczosResampling = _LanczosResampling;
+			this.scale = _scale;
 			this.addFilter = _addFilter;
 			this.applyFilters = _applyFilters;
 			this.clearFilters = _clearFilters;
 			this.clearFilter = _clearFilter;
-			this.scale = _scale;
+			
 		};
 		
 		//public
