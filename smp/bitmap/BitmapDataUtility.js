@@ -106,15 +106,14 @@
 			*/
 			/* END : DEPRECATED */
 			
-			function _setColor(index,color,alpha){
+			function _setColor(index,color){
 				
 				var color = ColorUtils.serializeColor(color,10);
-				if(alpha == undefined) alpha = 255;
 				
 				_bitmapData.data[index] = color.r;
 				_bitmapData.data[index+1] = color.g;
 				_bitmapData.data[index+2] = color.b;
-				_bitmapData.data[index+3] = alpha;
+				_bitmapData.data[index+3] = color.a;
 			}
 			
 			function _pointToIndex(x,y){

@@ -197,7 +197,7 @@
 			
 			if(params != 1){
 				for(i = 0; i<total; i+=4){
-					self.auxBitmapDataUtil.setColor(i,_channelFunction(self.bitmapDataUtil.getColor(i), params));
+					self.auxBitmapDataUtil.setColor(i,_channelFunction(self.bitmapDataUtil.getColor(i),channel, params));
 				}
 				return newData;
 			}else{
