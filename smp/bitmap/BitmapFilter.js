@@ -37,6 +37,11 @@
 					_filterAreaFnc = _contrast;
 					_filterPointFnc = _contrastFunction;
 					break;
+				case "threshold":
+					_filterType = "point";
+					_filterAreaFnc = _threshold;
+					_filterPointFnc = _thresholdFunction;
+					break;
 				case "red":
 					_filterType = "point";
 					_filterAreaFnc = _channel;
@@ -55,6 +60,10 @@
 				case "blur":
 					_filterType = "area";
 					_filterAreaFnc = _blur;
+					break;
+				case "threshold-blur":
+					_filterType = "area";
+					_filterAreaFnc = _thresholdBlur;
 					break;
 				case "edges":
 					_filterType = "area";
@@ -120,7 +129,6 @@
 			this.auxBitmapDataUtil = _auxBitmapDataUtil;
 			
 			
-			
 		}
 		
 		//public
@@ -134,16 +142,16 @@
 		
 		//private shared methods
 		/** filters methods */
-		function _saturate(originalImageData, newData,params){
+		function _saturate(originalImageData, newData,value){
 			
 			var i,self=this;
 			var total = originalImageData.data.length;
 			self.auxBitmapDataUtil.setBitmapData(newData);
 			self.bitmapDataUtil.setBitmapData(originalImageData);
 			
-			if(params != 1){
+			if(value != 1){
 				for(i = 0; i<total; i+=4){
-					self.auxBitmapDataUtil.setColor(i,_saturateFunction(self.bitmapDataUtil.getColor(i), params));
+					self.auxBitmapDataUtil.setColor(i,_saturateFunction(self.bitmapDataUtil.getColor(i), value));
 				}
 				return newData;
 			}else{
@@ -154,16 +162,16 @@
 			
 		}
 		
-		function _brighten(originalImageData, newData,params){
+		function _brighten(originalImageData, newData,value){
 			
 			var i,self=this;
 			var total = originalImageData.data.length;
 			self.auxBitmapDataUtil.setBitmapData(newData);
 			self.bitmapDataUtil.setBitmapData(originalImageData);
 			
-			if(params != 1){
+			if(value != 1){
 				for(i = 0; i<total; i+=4){
-					self.auxBitmapDataUtil.setColor(i,_brightenFunction(self.bitmapDataUtil.getColor(i), params));					
+					self.auxBitmapDataUtil.setColor(i,_brightenFunction(self.bitmapDataUtil.getColor(i), value));					
 				}
 				return newData;
 			}else{
@@ -171,16 +179,16 @@
 			}
 		}
 		
-		function _contrast(originalImageData, newData,params){
+		function _contrast(originalImageData, newData,value){
 			
 			var i,self=this;
 			var total = originalImageData.data.length;
 			self.auxBitmapDataUtil.setBitmapData(newData);
 			self.bitmapDataUtil.setBitmapData(originalImageData);
 			
-			if(params != 1){
+			if(value != 1){
 				for(i = 0; i<total; i+=4){
-					self.auxBitmapDataUtil.setColor(i,_contrastFunction(self.bitmapDataUtil.getColor(i), params));	
+					self.auxBitmapDataUtil.setColor(i,_contrastFunction(self.bitmapDataUtil.getColor(i), value));	
 				}
 				return newData;
 			}else{
@@ -188,16 +196,33 @@
 			}
 		}
 		
-		function _channel(originalImageData, newData,channel, params){
+		function _threshold(originalImageData, newData,value){
 			
 			var i,self=this;
 			var total = originalImageData.data.length;
 			self.auxBitmapDataUtil.setBitmapData(newData);
 			self.bitmapDataUtil.setBitmapData(originalImageData);
 			
-			if(params != 1){
+			if(value <= 1){
 				for(i = 0; i<total; i+=4){
-					self.auxBitmapDataUtil.setColor(i,_channelFunction(self.bitmapDataUtil.getColor(i),channel, params));
+					self.auxBitmapDataUtil.setColor(i,_thresholdFunction(self.bitmapDataUtil.getColor(i), value));	
+				}
+				return newData;
+			}else{
+				return originalImageData;
+			}
+		}
+		
+		function _channel(originalImageData, newData,channel, value){
+			
+			var i,self=this;
+			var total = originalImageData.data.length;
+			self.auxBitmapDataUtil.setBitmapData(newData);
+			self.bitmapDataUtil.setBitmapData(originalImageData);
+			
+			if(value != 1){
+				for(i = 0; i<total; i+=4){
+					self.auxBitmapDataUtil.setColor(i,_channelFunction(self.bitmapDataUtil.getColor(i),channel, value));
 				}
 				return newData;
 			}else{
@@ -206,10 +231,10 @@
 		}
 		
 		
-		function _blur(originalImageData, newData,params){
-			//console.log(params)
+		function _blur(originalImageData, newData,value,filterFnc){
+			//console.log(value)
 			var matrix;
-			var amount = Number(params);
+			var amount = Number(value);
 			switch(amount){
 				case 1:
 					matrix =   [0,1,0,
@@ -249,7 +274,24 @@
 			}
 			
 			if(matrix){
-				return _convolute.call(this,originalImageData,newData, matrix);
+
+				return _convolute.call(this,originalImageData,newData, matrix, undefined, undefined, filterFnc);
+			}else{
+				return originalImageData;
+			}
+		}
+		
+		function _thresholdBlur(originalImageData, newData,threshold,blurValue){
+			
+			function filterValueFnc(color){
+				if(0.2126*color.r + 0.7152*color.g + 0.0722*color.b >= threshold*255){
+					return true;
+				}else{
+					return false;
+				}
+			}
+			if(threshold <= 1){
+				return _blur.call(this,originalImageData, newData,blurValue,filterValueFnc);
 			}else{
 				return originalImageData;
 			}
@@ -273,7 +315,7 @@
 			return _convolute.call(this,originalImageData,newData, matrix);
 		}
 		
-		function _sharpen(originalImageData, newData,params){
+		function _sharpen(originalImageData, newData,value){
 			
 			
 			/**
@@ -285,7 +327,7 @@
 			definiçao prop. directa aos valores à volta (em valor absoluto) com a mesma diff. entre o valor ao centro e a soma dos valores à volta
 			*/
 			
-			var value = Number(params);
+			var value = Number(value);
 			var amount;
 			if(value >=1 ){
 				amount = 8-(value-1)*2+10;
@@ -305,7 +347,7 @@
 			
 		}
 			
-		function _emboss(originalImageData, newData,params){
+		function _emboss(originalImageData, newData,value){
 			/**			
 			
 			Aumentando e reduzindo a intensidade dos pixéis vizinhos
@@ -316,7 +358,7 @@
 			 * dir. prop valores à volta (para o mesmo valor ao centro)
 			 * */
 			
-			var value = Number(params);
+			var value = Number(value);
 			var amount;
 			if(value >=1 ){
 				//amount = 5-(value-1);
@@ -337,8 +379,8 @@
 			
 		}
 			
-		function _convolute(originalImageData, newData, matrix, factor,bias){
-			
+		function _convolute(originalImageData, newData, matrix, factor,bias, filterFnc){
+
 			if(factor == undefined) factor = 1;
 			if(bias == undefined) bias = 0;
 			
@@ -380,10 +422,16 @@
 			}*/
 			
 			//ligeiramente mais répido
+			var index,color;
 			for(x=0; x<imgw; x++){
 				for(y=0; y<imgh; y++){
-					var index = y*imgw*4+ x*4;					
-					self.auxBitmapDataUtil.setColor(index,_computeMatrix(x,y));
+					index = self.bitmapDataUtil.pointToIndex(x,y);
+					color = self.bitmapDataUtil.getColor(index);
+					if(filterFnc && filterFnc(color)){
+						self.auxBitmapDataUtil.setColor(index,_computeMatrix(x,y));
+					}else{
+						self.auxBitmapDataUtil.setColor(index,color);
+					}
 				}
 			}
 			
@@ -482,7 +530,7 @@
 		
 		
 		/** per pixel algorithms */
-		function _saturateFunction(obj, params)
+		function _saturateFunction(obj, value)
 		{
 
 				//grayscale
@@ -493,7 +541,7 @@
 			//dest.r = dest.g = dest.b =  = 0.3*r + 0.59*g + 0.11*b;
 			//in any case, the coefficients sum to 1.
 			
-			var  saturation = params;
+			var  saturation = value;
 			var rlum = 0.2126;
 			var glum = 0.7152;
 			var blum = 0.0722;
@@ -509,9 +557,9 @@
 			return dest;
 		}
 		
-		function _brightenFunction(obj, params)
+		function _brightenFunction(obj, value)
 		{
-			var  brightness = params;
+			var  brightness = value;
 			
 			var dest = {};
 			
@@ -544,9 +592,9 @@
 			return dest;
 		}
 
-		function _contrastFunction(obj, params)
+		function _contrastFunction(obj, value)
 		{
-			var  contrast = params;
+			var  contrast = value;
 			
 			var dest = {};
 			
@@ -568,9 +616,25 @@
 			return dest;
 		}
 		
-		function _channelFunction(obj, channel, params)
+		function _thresholdFunction(obj, value)
 		{
-			var  value = params;
+			var  threshold = value*255;
+			
+			var dest = {};
+			//REC 709
+			var nvalue = (0.2126*obj.r + 0.7152*obj.g + 0.0722*obj.b >= threshold) ? 255 : 0;
+			
+			dest.r = dest.g = dest.b = nvalue;
+			dest.a = obj.a;
+			
+			//dest = _range(dest);
+			
+			return dest;
+		}
+		
+		function _channelFunction(obj, channel, value)
+		{
+			var  value = value;
 			
 			var dest = {};
 			
