@@ -66,7 +66,7 @@
 			var interval = duration / (totalChar / numberChar);
 			if(interval < 1) {
 				interval = 1;
-				numberChar = totalChar/duration;
+				numberChar = Math.floor(totalChar/duration);
 			}
 			var timer = setInterval(incrementText, interval);
 			
