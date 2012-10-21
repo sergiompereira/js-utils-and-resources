@@ -19,7 +19,7 @@
 			return;
 		}
 	
-	
+		
 		/** utils */
 		function _createImageData(w,h){
 			return auxContext.createImageData(w,h);
@@ -55,7 +55,7 @@
 			
 			
 			var _imageData,
-				filters = [];
+				filters = [], worker, self = this;
 	
 			
 			if(imageData  && imageData !== "undefined"){
@@ -64,6 +64,24 @@
 				_imageData = _createImageData(w,h);
 			}
 			
+			smp.events.extend(this);
+			
+			//threading
+			function initWorker(){
+				if(!worker){
+					worker = new Worker('js/smp/ProcessImageData.js');
+					worker.addEventListener("message", onWorkerResponse, false);
+				}
+			}
+			;
+			function onWorkerResponse(evt){
+				if(evt.data.action == "log"){
+					console.log(evt.data.msg);
+				}else{
+					self.dispatchEvent("UPDATE",evt.data.imagedata);
+				}
+			}
+		
 			
 			//private made public below
 			
@@ -473,15 +491,16 @@
 			 */
 			function _addFilter(){
 				
+				initWorker();
+				
 				var args = [].slice.call(arguments,0);
 				//store and remove the first argument, the filter name;
-				var filtername = args[0];
-				var i;
-				var filterExist = false;
+				var filtername = args[0],
+					i,
+					filterExist = false;
 			
-				for(i=0; i<filters.length; i++){
-					//console.log(filters[i].filter.name() + " // "+filters[i].params)
-					if(filters[i].filter.name() == filtername){
+				for(i=0;i<filters.length; i++){
+					if(filters[i].name == filtername){
 						filters[i].params = args.slice(1);
 						filterExist = true;
 						break;
@@ -489,7 +508,7 @@
 					
 				};				
 				if(!filterExist){
-					filters.push({filter:new smp.bitmap.BitmapFilter(filtername), params:args.slice(1)});
+					filters.push({name:filtername, params:args.slice(1)});
 				}				
 			}
 			
@@ -505,40 +524,31 @@
 					return;
 				} 
 						
-				var j,x,y,
-				//always use a copy of ImageData, instead of using the stored one, to avoid overfiltering and improve performance
-					bmpData = _cloneImageData(_imageData),
-					total = bmpData.data.length,
-					imgw = bmpData.width,
-					imgh = bmpData.height,
-					index,filter,filterRef,params;
-				
-				
-				var pointTypeFilterExists = false;
-				for(j=0; j<filters.length;j++){
-					filterRef = filters[j];
-					params = filterRef.params.slice(0);
-					params.splice(0,0,bmpData);
-					bmpData = filterRef.filter.process.apply(filterRef.filter,params);
-				}
-				
-				return bmpData;
-				
+				worker.postMessage({'action':'process', 
+								'imagedata':_cloneImageData(_imageData) , 
+								'buffer':_createImageData(_imageData.width,_imageData.height) , 
+								'filters':filters});
+								
 			}
 			
 			function _clearFilters(){
-				filters.splice(0, filters.length);
+				filters = [];
 			};
 			
 			function _clearFilter(filterName){
-				var i;
-				for(i=0; i<filters.length; i++){
-					//console.log(filters[i].filter.name() + " // "+filters[i].params)
-					if(filters[i].filter.name() == filterName){
-						filters.splice(i, 1);
+				/*var filter;
+				for(filter in filters){
+					if(filter == filterName){
+						delete filters[filter];
 						break;
 					}
 					
+				};
+				*/
+				for(var i=0; i< filters.length; i++){
+					if(filters[i].name == filterName){
+						filters.splice(i,1);
+					}
 				};
 			}
 			

@@ -1,0 +1,333 @@
+importScripts("PointFilter.js", "ConvolutionMatrix.js", "DistributionFilter.js");
+
+var console = {};
+	console.log = function(msg){
+		postMessage({"action":"log", "msg":msg});
+	};
+	
+(function(){
+	
+	this.addEventListener('message', function(evt) {
+		var data = evt.data;
+	
+		if(data.action == "process"){
+			var imagedata = data.imagedata,
+				sourcedata = copyData(imagedata),
+				buffer = data.buffer,
+				tempBuffer = copyData(buffer),
+				filters = data.filters.slice(0),
+				width = imagedata.width,
+				height = imagedata.height,
+				length = imagedata.data.length,
+				x,y,color,currFilter,pointFiltersStack = [],firstrun = true;
+		
+			readFilters();
+			postMessage({"imagedata":copyData(tempBuffer,buffer)});
+			console.log("posted")
+			
+			//routines
+			function readFilters() {
+				for(var i=0;i<filters.length; i++){
+					
+					var filtername = filters[i].name;
+					if(PointFilter[filtername]){
+						pointFiltersStack.push({name:filtername, params:filters[i].params.slice(0)});
+						filters.splice(i,1);
+						readFilters();
+						return;
+					}else{
+						if(!isEmpty(pointFiltersStack)){
+							if(!firstrun){
+								sourcedata = copyData(tempBuffer);
+							}else{
+								firstrun = false;
+							}
+							processPointFilters();
+							pointFiltersStack = [];
+							readFilters();
+							return;
+						}else{
+							if(ConvolutionMatrix[filtername.toUpperCase()]){
+								if(!firstrun){
+									sourcedata = copyData(tempBuffer);
+								}else{
+									firstrun = false;
+								}
+								processConvolutionFilter(ConvolutionMatrix[filtername.toUpperCase()](filters[i].params[0] || undefined), filters[i].params.slice(1));
+								filters.splice(i,1);
+								readFilters();
+								return;
+							}else if(filtername == "convolute"){
+								if(!firstrun){
+									sourcedata = copyData(tempBuffer);
+								}else{
+									firstrun = false;
+								}
+								processConvolutionFilter(filters[i].params[0], filters[i].params.slice(1));
+								filters.splice(i,1);
+								readFilters();
+								return;
+							}else if (DistributionFilter[filtername]) {
+								if(!firstrun){
+									sourcedata = copyData(tempBuffer);
+								}else{
+									firstrun = false;
+								}
+								processDistributionFilter(DistributionFilter[filtername], filters[i].params.slice(1));
+								filters.splice(i,1);
+								readFilters();
+								return;
+							}else {
+								//ignore filter and go on
+								filters.splice(i, 1);
+								readFilters();
+								return;
+							}
+							
+						}
+					}
+				}
+				
+				if(!isEmpty(pointFiltersStack)){
+					if(!firstrun){
+						sourcedata = copyData(tempBuffer);
+					}else{
+						firstrun = false;
+					}
+					processPointFilters();
+					pointFiltersStack = [];
+				}
+			}
+				
+			function processPointFilters(){
+				var i,j;
+				for(i = 0; i < length; i+=4){
+					color = getColor(sourcedata,i);
+					for(j=0;j<pointFiltersStack.length; j++){
+						var params = pointFiltersStack[j].params;
+						var lastparam = params[params.length-1];
+								
+						var filterFnc, filterMap;
+						if (typeof lastparam === "function") {
+							filterFnc = lastparam;
+						}
+						else if (typeof lastparam === "object" && lastparam.width) {
+							filterMap = lastparam;
+						}
+						
+						if ((!filterFnc && !filterMap) || (filterFnc && filterFnc(color)) || (filterMap && getColor(filterMap, i).a > 125)) {
+							color = PointFilter[pointFiltersStack[j].name](color, pointFiltersStack[j].params);
+						}
+					}
+					setColor(tempBuffer, i,color);
+				}
+			}
+			function processConvolutionFilter(){
+				
+				var matrix,factor,bias,filter;
+				matrix = arguments[0];
+				var args = arguments[1];
+				if(!matrix || Object.prototype.toString.call(matrix)!=="[object Array]") throw new Error("ProcessImageData->processConvolutionFilter:Matrix not defined.");
+
+				if(args.length>0) {factor = args[0] }else{ factor = 1};
+				if(args.length>1) {bias = args[1] }else{ bias = 0};
+				if(args.length>2) {filter = args[2] }else{ filter = null};
+								
+				var filterFnc, filterMap;
+				if (filter) {
+					if (typeof filter === "function") {
+						filterFnc = filter;
+					}
+					else if (typeof filter === "object" && filter.data) {
+						filterMap = filter;
+					}
+				}
+
+				//matrix should have a even number of items and their square root should be an integer
+				var side = Math.sqrt(matrix.length),
+					centeroffset = (side-1)/2,
+					matrixlen = matrix.length,
+					sum = 0,
+					x,y,
+					pixelslength = sourcedata.data.length,
+					imgw = sourcedata.width,
+					imgh = sourcedata.height;
+				
+				if(side%Math.floor(side)>0) throw new Error("ProcessImageData->processConvolutionFilter:Matrix width and eight must be the same (matrix length's square root must be an integer).")
+				
+				
+				//obter o valor da soma de todos os elementos da matriz
+				for(i=0;i<matrix.length;i++){
+					sum+=matrix[i];
+				}
+				
+				
+				//avoid division by zero
+				if(sum == 0) sum = 1;
+			
+				var index,color;
+				for(y=0; y<imgh; y++){
+					for(x=0; x<imgw; x++){
+						color = getColorAt(sourcedata,x,y);
+						if((!filterFnc && !filterMap) || (filterFnc && filterFnc(color))  || (filterMap && getColorAt(filterMap,x,y).a > 125)){
+							setColorAt(tempBuffer, x,y, convolute(sourcedata,x,y,matrix,factor,bias));
+						}else{
+							setColorAt(tempBuffer, x,y, color);
+						}
+					}
+				}
+				
+				
+				
+				function convolute(sourcedata,imgx,imgy,matrix,factor,bias){
+	
+					var k,m,nimgx,nimgy,color,value,psum = {r:0,g:0,b:0,a:255};
+					for(k=0; k<side; k++){
+						for(m=0;m<side;m++){
+							value = matrix[m*side+k];
+							nimgx = imgx - centeroffset+k;
+							nimgy = imgy - centeroffset+m;
+							
+							if(nimgx<0) nimgx*=-1;
+							if(nimgy<0) nimgy*=-1;
+							if(nimgx>imgw-1) nimgx -= (nimgx - (imgw-1));
+							if(nimgy>imgh-1) nimgy -= (nimgy - (imgh-1));
+							
+							color = getColorAt(sourcedata,nimgx,nimgy);
+			
+							psum.r+=(color.r*value);
+							psum.g+=(color.g*value);
+							psum.b+=(color.b*value);					
+						}
+					}
+					
+					psum.r = Math.floor((psum.r/sum)*factor + bias);
+					psum.g = Math.floor((psum.g/sum)*factor + bias);
+					psum.b = Math.floor((psum.b/sum)*factor + bias);
+			
+					psum = range(psum);
+					return psum;
+						
+				}
+			}
+
+			function processDistributionFilter(){
+				var filterFunc = arguments[0];
+				var args = (arguments.length>1)  ? arguments[1] : undefined;
+
+				var x,y,imgw=sourcedata.width,imgh=sourcedata.height;
+				for (y = 0; y < imgh; y++) {
+					for (x = 0; x < imgw; x++) {
+						filterFunc(sourcedata,x,y, args);
+					}
+				}
+				tempBuffer = copyData(sourcedata);
+			}
+
+		}
+		
+		
+	}, false);
+
+
+	//utils
+	function getColor(imgdata, i){
+		var data = imgdata.data;
+
+		var color = {};
+		color.r = data[i];
+		color.g = data[i+1];
+		color.b = data[i+2];
+		color.a = data[i+3];
+
+		return color;
+	}
+			
+	function getColorAt(imgdata,x,y){
+		var id = pointToIndex(imgdata,x,y);
+		return getColor(imgdata,id);
+	}
+	function setColor(imgdata, i, color){
+		imgdata.data[i] = color.r;
+		imgdata.data[i+1] = color.g;
+		imgdata.data[i+2] = color.b;
+		imgdata.data[i+3] = color.a;
+	}
+			
+	function setColorAt(imgdata,x,y,color){
+		setColor(imgdata,pointToIndex(imgdata,x,y),color);
+	}
+			
+	function pointToIndex(imgdata,x,y){
+		return y*imgdata.width*4+ x*4;
+	}
+			
+	function indexToPoint(imgdata,index){
+		var tx = index%(imgdata.width * 4)/4;
+		var x = Math.floor(tx);
+		var subindex = (tx%1) * 4 - 1;
+		var y = Math.floor((index/4)/imgdata.width);
+		
+		return {x:x, y:y};
+	}
+	function range(color){
+		if(color.r>255)color.r = 255; else if(color.r<0)color.r = 0;
+		if(color.g>255)color.g = 255; else if(color.g<0)color.g = 0;
+		if(color.b>255)color.b = 255; else if(color.b<0)color.b = 0;
+		if(color.a>255)color.a = 255; else if(color.a<0)color.a = 0;
+		
+		return color;
+	}
+	function copyData(imagedata,destdata){
+		
+		var i=0;len=imagedata.data.length;
+		if (!destdata) {
+			destdata = {};
+			destdata.width = imagedata.width;
+			destdata.height = imagedata.height;
+			destdata.data = [];
+		}
+		var imgdata = imagedata.data, nimgdata = destdata.data;
+		for(i=0;i<len;i++){
+			nimgdata[i] = imgdata[i];
+		}
+		return destdata;
+	}
+	function clone(parent, child){
+		
+		var child = child || {};
+		var i, 
+			toString = Object.prototype.toString, 
+			astr = "[object Array]";
+		
+		function _copy(parent, child){
+			
+			for(i in parent){
+				if(parent.hasOwnProperty(i)){
+					if(typeof parent[i] === "object"){
+						child[i] = (toString.call(parent[i])===astr) ? [] : {};
+						_copy(parent[i], child[i]);
+					}else{
+						child[i] = parent[i];
+					}
+				}
+			}
+			return child;
+		}
+		
+		_copy(parent,child);
+		
+		return child;
+	}
+	
+	function isEmpty(obj){
+		var key;
+		for(key in obj){
+			if(obj.hasOwnProperty(key)) return false;
+		}
+		return true;
+	}
+	
+	
+	
+}());
