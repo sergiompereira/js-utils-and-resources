@@ -8,28 +8,27 @@
 		var Constructor;
 		//dependencies
 		var Geometry2D = smp.math.Geometry2D;
-		var BitmapDataUtility = smp.bitmap.BitmapDataUtility;
+		var BitmapData = smp.canvas.BitmapData;
 		
 		Constructor = function(effectname)
 		{
 			
-			var _bitmapDataUtil = new BitmapDataUtility();	
-			var _auxBitmapDataUtil = new BitmapDataUtility();
-			
-			var _effectName = effectname;
-			var _effectType = "";
-			var _effectPointFnc, _effectAreaFnc;
+			var _bitmapData = new BitmapData(),	
+				_auxBitmapData = new BitmapData(),
+				_effectName = effectname,
+				_effectType = "",
+				_effectFnc;
 			
 			
 			switch(_effectName){
 				
 				case "stretch":
 					_effectType = "area";
-					_effectAreaFnc = _stretch;
+					_effectFnc = _stretch;
 					break;
 				case "magnify":
 					_effectType = "area";
-					_effectAreaFnc = _magnify;
+					_effectFnc = _magnify;
 					break;
 				default:
 					throw new Error("BitmapEffect->constructor: No effect name specified.");
@@ -40,17 +39,11 @@
 			 * @param[1] : empty bitmap data ImageData
 			 * @param... : filter params
 			 */
-			function _applyToData(){				
-				return  _effectAreaFnc.apply(this, arguments);
+			function _process(){				
+				return  _effectFnc.apply(this, arguments);
 			}
 			
-			function _applyToPoint(){
-				if(_effectType == "point"){
-					return _effectPointFnc.apply(this, arguments);
-				}else{
-					throw new Error("BitmapEffect->applyToPoint: Effect is of type 'area'. Applying on a point basis will render unconsistent results.")
-				}
-			}
+			
 			function _name(){
 				return _effectName;
 			}
@@ -59,12 +52,11 @@
 			}
 			
 			
-			this.applyToData = _applyToData;
-			this.applyToPoint = _applyToPoint;
+			this.process = _process;
 			this.name = _name;
 			this.type = _type;
-			this.bitmapDataUtil = _bitmapDataUtil;
-			this.auxBitmapDataUtil = _auxBitmapDataUtil;
+			this.bitmapData = _bitmapData;
+			this.auxBitmapData = _auxBitmapData;
 			
 			
 			
@@ -88,14 +80,18 @@
 		 * radialCoeff: 1 - ...50... - 200
 		 */
 		
-		function _stretch(originalImageData, newData, origin, dest, displacementCoeff, radialCoeff){
+		function _stretch(originalImageData, origin, dest, displacementCoeff, radialCoeff){
 		
 			
-			var i;
-			var total = originalImageData.data.length;
-			var self = this;
-			self.auxBitmapDataUtil.setBitmapData(newData);
-			self.bitmapDataUtil.setBitmapData(originalImageData);
+			var i,
+				total = originalImageData.data.length,
+				self = this;
+				
+			if(!displacementCoeff) displacementCoeff = 20;
+			if(!radialCoeff) radialCoeff = 50;
+			
+			self.auxBitmapData.setEmptyData(originalImageData.width, originalImageData.height);
+			self.bitmapData.setData(originalImageData);
 			
 			// displacement: the vector between the original position and the new position (destination)
             var displacement = {x:dest.x - origin.x, y:dest.y - origin.y};
@@ -106,19 +102,14 @@
             correctedDisplacement.x = (displacement.x / (1.0 + Math.abs(displacement.x) / displacementCoeff));
             correctedDisplacement.y = (displacement.y / (1.0 + Math.abs(displacement.y) / displacementCoeff));
            
-			self.bitmapDataUtil.setBitmapData(originalImageData);
-			
-			/*for(i = 0; i<20; i+=4){
-				_setColor(newData,i,_stretchPoint(bitmapDataUtil.indexToPoint(i)));	
-			}*/
 			
 			var x,y,w = originalImageData.width,h = originalImageData.height;
 			for(y = 0; y<h; y++){
 				for(x = 0; x<w; x++){
-					self.auxBitmapDataUtil.setColor(self.bitmapDataUtil.pointToIndex(x,y),_stretchPoint({x:x,y:y}));	
+					self.auxBitmapData.setColor(self.bitmapData.pointToIndex(x,y),_stretchPoint({x:x,y:y}));	
 				}
 			}
-			return newData;
+			return self.auxBitmapData.getData();
 			
 			function _stretchPoint(point){
 				
@@ -131,13 +122,13 @@
 	            
 	            var pos = {x:point.x - correctedDisplacement.x / relativeDisplacement, y:point.y - correctedDisplacement.y / relativeDisplacement};
 
-	            return self.bitmapDataUtil.bilinearInterpolation(pos);
+	            return self.bitmapData.bilinearInterpolation(pos);
 			}
 			
 			
 		}
 		
-		function _magnify(originalImageData, newData, position, innerRadius, outerRadius, magnificationValue,interpolationType){
+		function _magnify(originalImageData, position, innerRadius, outerRadius, magnificationValue,interpolationType){
 	    		
 					
 			var self = this,
@@ -150,28 +141,28 @@
 		     	total = originalImageData.data.length,
 				i,j,x,y;
 
-			(interpolationType == "bicubic") ? _interpolationFnc = self.bitmapDataUtil.bicubicInterpolation : _interpolationFnc = self.bitmapDataUtil.bilinearInterpolation;
+			(interpolationType == "bicubic") ? _interpolationFnc = self.bitmapData.bicubicInterpolation : _interpolationFnc = self.bitmapData.bilinearInterpolation;
 
 
 			_center.x = 150;
 			_center.y = 100;
-			
-			self.auxBitmapDataUtil.setBitmapData(newData);
-			self.bitmapDataUtil.setBitmapData(originalImageData);
+
+			self.auxBitmapData.setEmptyData(originalImageData.width, originalImageData.height);
+			self.bitmapData.setData(originalImageData);
 	    	
-	    	if(position !== undefined && position != "") _center = position;
-	    	if(innerRadius !== undefined && innerRadius != "") _innerRadius = innerRadius;
-	    	if(outerRadius !== undefined && outerRadius != "") _outerRadius = outerRadius;
-	    	if(magnificationValue !== undefined && magnificationValue != "") _magnification = magnificationValue;
+	    	if(position  && position != "") _center = position;
+	    	if(innerRadius  && innerRadius != "") _innerRadius = innerRadius;
+	    	if(outerRadius  && outerRadius != "") _outerRadius = outerRadius;
+	    	if(magnificationValue  && magnificationValue != "") _magnification = magnificationValue;
 	    	
 			for(i = 0; i<total; i+=4){
 								
-				self.auxBitmapDataUtil.setColor(i, getNewColor(self.bitmapDataUtil.indexToPoint(i)));
+				self.auxBitmapData.setColor(i, getNewColor(self.bitmapData.indexToPoint(i)));
 				
 			}
 			
 			
-			return newData;
+			return self.auxBitmapData.getData();
 			
 			function getNewColor(point){
 				
@@ -228,7 +219,7 @@
 		            targetPixel.x = coord.x;
 		            targetPixel.y = coord.y;
 		            
-		            return self.bitmapDataUtil.getColorAt(targetPixel.x,targetPixel.y);
+		            return self.bitmapData.getColorAt(targetPixel.x,targetPixel.y);
 		        }
 		     
 		    	

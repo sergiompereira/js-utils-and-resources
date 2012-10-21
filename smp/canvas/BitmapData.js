@@ -1,55 +1,100 @@
 (function(){	
 	
-	smp.createNamespace("smp.bitmap.BitmapDataUtility");
+	smp.createNamespace("smp.canvas.BitmapData");
 	
-	smp.bitmap.BitmapDataUtility = (function()
+	smp.canvas.BitmapData = (function()
 	{
 		//dependencies
 		var ColorUtils = smp.math.ColorUtils;
 		var MathUtils = smp.math.MathUtils;
-		//!! Do not load the reference here, to avoid looped dependencies 
-		//(BitmapFilter loads this class as well)
-		//var BitmapFilter = smp.bitmap.BitmapFilter;
 		
 		//private properties
 		var Constructor;
-		
+		var auxCanvas = document.createElement("canvas");
+		var auxContext;
+		if(!!auxCanvas.getContext){
+			auxContext = auxCanvas.getContext("2d");
+		}else{
+			smp.log("CanvasImage -> The browser doesn't support canvas.");
+			return;
+		}
 	
-
+	
+		/** utils */
+		function _createImageData(w,h){
+			return auxContext.createImageData(w,h);
+		}
+		
+		function _cloneImageData(imageData){
+			
+			auxCanvas.width = imageData.width;
+			auxCanvas.height = imageData.height;
+			auxContext.putImageData(imageData, 0, 0);
+			return auxContext.getImageData(0, 0, imageData.width, imageData.height)
+			//Check speed...!
+			/* 
+			var i;
+			var total = imgData.data.length;
+			var tempImgData = _createImageData(imgData.width, imgData.height);
+			for(i = 0; i<total; i++){
+				tempImgData.data[i] = imgData.data[i];
+			}
+			
+			//tempImgData.width = imgData.width;
+			//tempImgData.height = imgData.height;
+			
+			return tempImgData;
+			*/
+		}
+		
+		
 		
 		//Constructor
-		Constructor = function(bmpData)
+		Constructor = function(imageData,w,h)
 		{
-			var _bitmapData;
-			
-			//filters
-			var filters = [];
-			var filtersObj;
 			
 			
-			if(bmpData != null && bmpData !== "undefined"){
-				_bitmapData = bmpData;
+			var _imageData,
+				filters = [];
+	
+			
+			if(imageData  && imageData !== "undefined"){
+				_imageData = _cloneImageData(imageData);
+			}else if(w && h){
+				_imageData = _createImageData(w,h);
 			}
 			
 			
 			//private made public below
 			
-			function _setBitmapData(bmpData){
-				_bitmapData = bmpData;
+			function _setData(imageData){
+				_imageData = _cloneImageData(imageData);
 			}
 			
-			
-			function _getBitmapData(){
-				return _bitmapData;
+			function _setEmptyData(width,height){
+				_imageData = _createImageData(width,height);
 			}
+			function _getData(){
+				return _imageData;
+			}
+			
+			function _clone(){
+				if(_imageData){
+					new smp.canvas.BitmapData(_cloneImageData(_imageData));
+				}else{
+					new smp.canvas.BitmapData();
+				}
+				return null;
+			}
+			
 			
 			function _getColor(index, hexa){
 				var color = {};
 				
-				color.r = _bitmapData.data[index];
-				color.g = _bitmapData.data[index+1];
-				color.b = _bitmapData.data[index+2];
-				color.a = _bitmapData.data[index+3];
+				color.r = _imageData.data[index];
+				color.g = _imageData.data[index+1];
+				color.b = _imageData.data[index+2];
+				color.a = _imageData.data[index+3];
 				
 				if(hexa){
 					for(var key in color){
@@ -78,10 +123,10 @@
 				var subindex = (tx%1) * 4 - 1;
 				point.y = Math.floor((id/4)/bmpData.width);
 				
-				point.r = _bitmapData.data[id-subindex];
-				point.g = _bitmapData.data[id-subindex+1];
-				point.b = _bitmapData.data[id-subindex+2];
-				point.a = _bitmapData.data[id-subindex+3];
+				point.r = _imageData.data[id-subindex];
+				point.g = _imageData.data[id-subindex+1];
+				point.b = _imageData.data[id-subindex+2];
+				point.a = _imageData.data[id-subindex+3];
 				
 				switch(subindex){
 					case 0:
@@ -110,21 +155,26 @@
 				
 				var color = ColorUtils.serializeColor(color,10);
 				
-				_bitmapData.data[index] = color.r;
-				_bitmapData.data[index+1] = color.g;
-				_bitmapData.data[index+2] = color.b;
-				_bitmapData.data[index+3] = color.a;
+				_imageData.data[index] = color.r;
+				_imageData.data[index+1] = color.g;
+				_imageData.data[index+2] = color.b;
+				_imageData.data[index+3] = color.a;
+			}
+			
+			function _setColorAt(x,y,color){
+				
+				_setColor(_pointToIndex(x,y),color);
 			}
 			
 			function _pointToIndex(x,y){
-				return y*_bitmapData.width*4+ x*4;
+				return y*_imageData.width*4+ x*4;
 			}
 			
 			function _indexToPoint(index){
-				var tx = index%(_bitmapData.width * 4)/4;
+				var tx = index%(_imageData.width * 4)/4;
 				var x = Math.floor(tx);
 				var subindex = (tx%1) * 4 - 1;
-				var y = Math.floor((index/4)/_bitmapData.width);
+				var y = Math.floor((index/4)/_imageData.width);
 				
 				return {x:x, y:y};
 			}
@@ -373,48 +423,46 @@
 				}*/
 			}
 			
-			
+						
 			/**
 			 * 
 			 * @param {ImageData} originalImageData
 			 * @param {ImageData} newData			: it assumes to be a factor*size of the original ImageData.
 			 * @return ImageData
 			 */
-			function _scale(originalImageData, newData, interpolationType){
+			function _scale(factor, interpolationType){
 				
-				var total = newData.data.length,
-				 	width = newData.width,
-				 	height = newData.height,
-					factor = width/originalImageData.width,
-					bmpUtil = new smp.bitmap.BitmapDataUtility(originalImageData),
-					newBmpUtil = new smp.bitmap.BitmapDataUtility(newData),
+				var width = _imageData.width*factor,
+				 	height = _imageData.height*factor,
+					newBmp = new smp.canvas.BitmapData(null, _imageData.width, _imageData.height),
+					total = newBmp.getData().data.length,
 					interpolationFnc;
-				
+								
 				switch(interpolationType){
 					case "nearest":
-					 	_interpolationFnc = bmpUtil.nearestNeighbor;
+					 	interpolationFnc = _nearestNeighbor;
 					break;
 					case "bicubic":
-						_interpolationFnc = bmpUtil.bicubicInterpolation;
+						interpolationFnc = _bicubicInterpolation;
 					break;
 					case "lanczos":
-						_interpolationFnc = bmpUtil.LanczosResampling;
+						interpolationFnc = _LanczosResampling;
 					break;
 					default:
 						//linear
-						 _interpolationFnc = bmpUtil.bilinearInterpolation;
+						 interpolationFnc = _bilinearInterpolation;
 				}
 				
 				var x,y,ncolor;	
 						
 				for(y = 0; y<height; y++){	
 					for(x = 0; x<width; x++){
-						ncolor = _interpolationFnc({x:x/factor , y:y/factor})
-						newBmpUtil.setColor(newBmpUtil.pointToIndex(x,y), ncolor);
+						ncolor = interpolationFnc({x:x/factor , y:y/factor})
+						newBmp.setColor(newBmp.pointToIndex(x,y), ncolor);
 					}		
 				}
 				
-				return newData;
+				return newBmp.getData();
 			}
 			
 			
@@ -424,79 +472,55 @@
 			 *@param... : filter params 
 			 */
 			function _addFilter(){
-				//convert to array
-				var args = Array.prototype.slice.call(arguments);
+				
+				var args = [].slice.call(arguments,0);
 				//store and remove the first argument, the filter name;
-				var filtername = args.shift();
+				var filtername = args[0];
 				var i;
 				var filterExist = false;
-		
+			
 				for(i=0; i<filters.length; i++){
 					//console.log(filters[i].filter.name() + " // "+filters[i].params)
 					if(filters[i].filter.name() == filtername){
-						filters[i].params = args;
+						filters[i].params = args.slice(1);
 						filterExist = true;
 						break;
 					}
 					
-				};
+				};				
 				if(!filterExist){
-					filters.push({filter:new smp.bitmap.BitmapFilter(filtername), params:args});
-				}
+					filters.push({filter:new smp.bitmap.BitmapFilter(filtername), params:args.slice(1)});
+				}				
 			}
 			
 			/**
 			 * 
-			 * @param bmpData :	always pass an (original) ImageData, instead of using the stored one, to avoid overfiltering.
-			 * @param emptyBmpData : pass an empty ImageData, to avoid DOM dependencies in this class.
-			 * @returns
+			 * @returns ImageData
 			 */
-			/**
-			 * TODO : melhorar a performance evitando a escrita no ImageData original
-			 * e favorecendo-a no ImageData vazio
-			 */
-			function _applyFilters(bmpData, emptyBmpData){
-					
-				var bmpDataUtil = new smp.bitmap.BitmapDataUtility(bmpData);
+			
+			function _processFilters(){
 				
+				if(!_imageData){
+					throw new Error("BitmapData -> processFilters : No ImageData available.")
+					return;
+				} 
+						
 				var j,x,y,
+				//always use a copy of ImageData, instead of using the stored one, to avoid overfiltering and improve performance
+					bmpData = _cloneImageData(_imageData),
 					total = bmpData.data.length,
 					imgw = bmpData.width,
 					imgh = bmpData.height,
 					index,filter,filterRef,params;
 				
+				
 				var pointTypeFilterExists = false;
 				for(j=0; j<filters.length;j++){
-					if(filters[j].filter.type() == "point"){
-						pointTypeFilterExists = true;
-						break;
-					}
-				}
-				if(pointTypeFilterExists){
-					for(i = 0; i<total; i+=4){
-					//for(x=0; x<imgw; x++){
-						//for(y=0; y<imgh; y++){
-							//index = y*imgw*4+ x*4;	
-							for(j=0; j<filters.length;j++){
-								filterRef = filters[j];
-								if(filterRef.filter.type() == "point"){
-									bmpDataUtil.setColor(i,filterRef.filter.applyToPoint(bmpDataUtil.getColor(i),filterRef.params));
-								}
-							}
-						//}
-					}
-				}
-				
-				for(j=0; j<filters.length;j++){
 					filterRef = filters[j];
-					if(filterRef.filter.type() == "area"){
-						//console.log("area: "+filters[j].params)
-						params = filterRef.params;
-						bmpData = filterRef.filter.applyToData(bmpData,emptyBmpData,params);
-						//console.log(filterRef.params);
-					}
+					params = filterRef.params.slice(0);
+					params.splice(0,0,bmpData);
+					bmpData = filterRef.filter.process.apply(filterRef.filter,params);
 				}
-			
 				
 				return bmpData;
 				
@@ -538,11 +562,13 @@
 			
 			
 			//public interface
-			this.getBitmapData = _getBitmapData;
-			this.setBitmapData = _setBitmapData;
+			this.getData = _getData;
+			this.setData = _setData;
+			this.setEmptyData = _setEmptyData;
 			this.getColor = _getColor;
 			this.getColorAt = _getColorAt;
 			this.setColor = _setColor;
+			this.setColorAt = _setColorAt;
 			this.pointToIndex = _pointToIndex;
 			this.indexToPoint = _indexToPoint;
 			this.nearestNeighbor = _nearestNeighbor;
@@ -551,7 +577,7 @@
 			this.LanczosResampling = _LanczosResampling;
 			this.scale = _scale;
 			this.addFilter = _addFilter;
-			this.applyFilters = _applyFilters;
+			this.processFilters = _processFilters;
 			this.clearFilters = _clearFilters;
 			this.clearFilter = _clearFilter;
 			
