@@ -1,8 +1,7 @@
 (function(){
 	
-	smp.createNamespace("smp.bitmap.BitmapEffect");
 	
-	smp.bitmap.BitmapEffect = (function()
+	BitmapEffect = (function()
 	{
 		//private properties
 		var Constructor;
@@ -19,7 +18,6 @@
 				_effectType = "",
 				_effectFnc;
 			
-			
 			switch(_effectName){
 				
 				case "stretch":
@@ -30,8 +28,13 @@
 					_effectType = "area";
 					_effectFnc = _magnify;
 					break;
+				case "ripple":
+					_effectType = "area";
+					_effectFnc = _ripple;
+					break;
 				default:
 					throw new Error("BitmapEffect->constructor: No effect name specified.");
+					return false;
 			}
 				
 			/**
@@ -230,7 +233,61 @@
 		}
 		
 		
-		 
+		function _ripple(originalImageData, center, displacement, size, rippleWidth, phase, lightDirection, lightBright){
+			
+			self = this;
+			
+			if(!center) center = {x:320, y:240};
+			if(displacement == null || displacement === "undefined"){
+				displacement = 6;
+			}else if(displacement == 0){
+				return originalImageData;
+			}
+			if(!size) size = 256;
+			if(!rippleWidth) rippleWidth = 32;
+			if(!phase) phase = 0;
+			if(!lightDirection) lightDirection = {x:0.7, y:0.7};
+			if(!lightBright) lightBright = 0.3;
+			
+			self.auxBitmapData.setEmptyData(originalImageData.width, originalImageData.height);
+			self.bitmapData.setData(originalImageData);
+			
+			var x,y,w = originalImageData.width,h = originalImageData.height;
+			for(y = center.y-size; y<center.y+size; y++){
+				for(x = center.x-size; x<center.x+size; x++){
+					self.auxBitmapData.setColorAt(x,y,evaluatePixel({x:x,y:y}));	
+				}
+			}
+			return self.auxBitmapData.getData();
+			
+			function evaluatePixel(point){
+				
+				var offset = {x:point.x - center.x, y:point.y-center.y};
+
+				// distance from center
+				var r = distance(0,0,offset.x,offset.y);
+				var originColor = self.bitmapData.getColorAt(point.x, point.y);
+
+				if (r < size && r>0) {
+					// disp = # pixels to displace, ang = displace direction
+					
+					var disp = (1.0 - r/size) * displacement * Math.sin(-phase + r/(rippleWidth/6.28));
+					var ang = Math.atan2(offset.x,offset.y);
+					// brightness of pixel is based on displacement and angle between
+					// displacement and lightdir
+					var bright = 1.0 + (lightBright*disp/displacement * (offset.x*lightDirection.x/r + offset.y*lightDirection.y/r) );
+					
+					var interpol = self.bitmapData.bilinearInterpolation({x:point.x+disp*Math.sin(ang), y:point.y+disp*Math.cos(ang)});
+					return {r:interpol.r*bright,
+							g:interpol.g*bright,
+							b:interpol.b*bright,
+							a:interpol.a*bright
+						};
+				} else {
+					return originColor;
+				}
+			}
+		}
 		    
 		
 		/**  utils */
@@ -242,6 +299,15 @@
 			if(color.a>255)color.a = 255; else if(color.a<0)color.a = 0;
 			
 			return color;
+		}
+		
+		function distance(x1,y1,x2,y2){
+			var dx = x1 - x2;
+			var dy = y1 - y2;
+			return Math.sqrt(dx*dx+dy*dy);
+		}
+		function isInsideEllipse(x,y,a,b){
+			return x*x/(a*a) + y*y/(b*b) < 1;
 		}
 		
 		
