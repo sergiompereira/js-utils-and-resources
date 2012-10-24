@@ -1,4 +1,4 @@
-importScripts("PointFilter.js", "ConvolutionMatrix.js", "DistributionFilter.js");
+importScripts("PointFilter.js","ConvolutionMatrix.js","DistributionFilter.js");
 
 var console = {};
 	console.log = function(msg){
@@ -23,7 +23,6 @@ var console = {};
 		
 			readFilters();
 			postMessage({"imagedata":copyData(tempBuffer,buffer)});
-			console.log("posted")
 			
 			//routines
 			function readFilters() {
@@ -77,7 +76,8 @@ var console = {};
 								filters.splice(i,1);
 								readFilters();
 								return;
-							}else {
+							}else{
+								
 								//ignore filter and go on
 								filters.splice(i, 1);
 								readFilters();
@@ -115,7 +115,7 @@ var console = {};
 							filterMap = lastparam;
 						}
 						
-						if ((!filterFnc && !filterMap) || (filterFnc && filterFnc(color)) || (filterMap && getColor(filterMap, i).a > 125)) {
+						if ((!filterFnc && !filterMap) || (filterFnc && filterFnc(color)) || (filterMap && getColor(filterMap, i).g > 125)) {
 							color = PointFilter[pointFiltersStack[j].name](color, pointFiltersStack[j].params);
 						}
 					}
@@ -169,7 +169,7 @@ var console = {};
 				for(y=0; y<imgh; y++){
 					for(x=0; x<imgw; x++){
 						color = getColorAt(sourcedata,x,y);
-						if((!filterFnc && !filterMap) || (filterFnc && filterFnc(color))  || (filterMap && getColorAt(filterMap,x,y).a > 125)){
+						if((!filterFnc && !filterMap) || (filterFnc && filterFnc(color))  || (filterMap && getColorAt(filterMap,x,y).g > 125)){
 							setColorAt(tempBuffer, x,y, convolute(sourcedata,x,y,matrix,factor,bias));
 						}else{
 							setColorAt(tempBuffer, x,y, color);
