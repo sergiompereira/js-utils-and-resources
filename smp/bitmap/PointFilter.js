@@ -30,7 +30,7 @@
 				//formula : diferença de luminância / luminância média
 				//ou seja, o desvio da média a dividir pela média.
 				//http://en.wikipedia.org/wiki/Contrast_(formula)#Formula
-				return ((color - 125)*value)+ 125;
+				return ((color - 127)*value)+ 127;
 			}
 			
 			dest.a = color.a;
