@@ -71,7 +71,7 @@
 			var timer = setInterval(incrementText, interval);
 			
 			//_calls.push({target:textField, timer:timer});
-			
+			callsColl.push({target:element, timers:[timer]});
 			
 			function incrementText() {
 

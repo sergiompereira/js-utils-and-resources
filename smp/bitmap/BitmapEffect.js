@@ -1,8 +1,7 @@
 (function(){
 	
-	smp.createNamespace("smp.bitmap.BitmapEffect");
 	
-	smp.bitmap.BitmapEffect = (function()
+	BitmapEffect = (function()
 	{
 		//private properties
 		var Constructor;
@@ -19,7 +18,6 @@
 				_effectType = "",
 				_effectFnc;
 			
-			
 			switch(_effectName){
 				
 				case "stretch":
@@ -30,8 +28,17 @@
 					_effectType = "area";
 					_effectFnc = _magnify;
 					break;
+				case "ripple":
+					_effectType = "area";
+					_effectFnc = _ripple;
+					break;
+				case "displace":
+					_effectType = "area";
+					_effectFnc = _displace;
+					break;
 				default:
 					throw new Error("BitmapEffect->constructor: No effect name specified.");
+					return false;
 			}
 				
 			/**
@@ -230,18 +237,173 @@
 		}
 		
 		
-		 
+		function _ripple(originalImageData, center, displacement, size, rippleWidth, phase, lightDirection, lightBright){
+			
+			self = this;
+			
+			if(!center) center = {x:320, y:240};
+			if(displacement == null || displacement === "undefined"){
+				displacement = 6;
+			}else if(displacement == 0){
+				return originalImageData;
+			}
+			if(!size) size = 256;
+			if(!rippleWidth) rippleWidth = 32;
+			if(!phase) phase = 0;
+			if(!lightDirection) lightDirection = {x:0.7, y:0.7};
+			if(!lightBright) lightBright = 0.3;
+			
+			self.auxBitmapData.setEmptyData(originalImageData.width, originalImageData.height);
+			self.bitmapData.setData(originalImageData);
+			
+			var x,y,w = originalImageData.width,h = originalImageData.height;
+			for(y = center.y-size; y<center.y+size; y++){
+				for(x = center.x-size; x<center.x+size; x++){
+					self.auxBitmapData.setColorAt(x,y,evaluatePixel({x:x,y:y}));	
+				}
+			}
+			return self.auxBitmapData.getData();
+			
+			function evaluatePixel(point){
+				
+				var offset = {x:point.x - center.x, y:point.y-center.y};
+
+				// distance from center
+				var r = distance(0,0,offset.x,offset.y);
+				var originColor = self.bitmapData.getColorAt(point.x, point.y);
+
+				if (r < size && r>0) {
+					// disp = # pixels to displace, ang = displace direction
+					
+					var disp = (1.0 - r/size) * displacement * Math.sin(-phase + r/(rippleWidth/6.28));
+					var ang = Math.atan2(offset.x,offset.y);
+					// brightness of pixel is based on displacement and angle between
+					// displacement and lightdir
+					var bright = 1.0 + (lightBright*disp/displacement * (offset.x*lightDirection.x/r + offset.y*lightDirection.y/r) );
+					
+					var interpol = self.bitmapData.bilinearInterpolation({x:point.x+disp*Math.sin(ang), y:point.y+disp*Math.cos(ang)});
+					return {r:interpol.r*bright,
+							g:interpol.g*bright,
+							b:interpol.b*bright,
+							a:interpol.a*bright
+						};
+				} else {
+					return originColor;
+				}
+			}
+		}
 		    
+		
+		function _displace(originalImageData, map, displacement, angle, lightDirection, lightBright){
+			self = this;
+			
+			self.auxBitmapData.setEmptyData(originalImageData.width, originalImageData.height);
+			self.bitmapData.setData(originalImageData);
+			var mapdata = new smp.canvas.BitmapData(map);
+			var sobelMatrix = [-2, -1, 0,
+							   -1,  0, 1,
+							   	0,  1, 2];
+			var side = Math.sqrt(sobelMatrix.length),
+				centeroffset = (side-1)/2,
+				matrixlen = sobelMatrix.length,
+				imgw = map.width,
+				imgh = map.height,
+				sum = 0;
+				
+			//obter o valor da soma de todos os elementos da matriz
+				for(i=0;i<sobelMatrix.length;i++){
+					sum+=sobelMatrix[i];
+				}
+				//avoid division by zero
+				if(sum == 0) sum = 1;;
+			
+			var x,y,w = originalImageData.width,h = originalImageData.height;
+			for(y = 0; y<h; y++){
+				for(x = 0; x<w; x++){
+					self.auxBitmapData.setColorAt(x,y,evaluatePixel({x:x,y:y}));	
+				}
+			}
+			return self.auxBitmapData.getData();
+			
+			function evaluatePixel(point){
+		
+				var originColor = self.bitmapData.getColorAt(point.x, point.y);
+				
+				var slope = convolute(mapdata,x,y,sobelMatrix,1,0).g;
+				
+				var value = mapdata.getColorAt(x,y).g;
+				if (value > 0) {
+					// disp = # pixels to displace, ang = displace direction
+					
+					var disp = (value/255) * displacement;
+					// brightness of pixel is based on displacement and angle between
+					// displacement and lightdir
+					//var bright = 1.0 + (lightBright*disp/displacement * (offset.x*lightDirection.x/r + offset.y*lightDirection.y/r) );
+					var bright = 1 + slope/255 * lightBright;
+					//var bright = 1;
+					var interpol = self.bitmapData.bilinearInterpolation({x:point.x+disp*Math.sin(angle), y:point.y+disp*Math.cos(angle)});
+					return range({r:interpol.r*bright,
+							g:interpol.g*bright,
+							b:interpol.b*bright,
+							a:interpol.a
+						});
+				} else {
+					return originColor;
+				}
+				
+			}
+			
+			function convolute(bmpdata,imgx,imgy,matrix,factor,bias){
+				
+				var k,m,nimgx,nimgy,color,value,psum = {r:0,g:0,b:0,a:255};
+				for(k=0; k<side; k++){
+					for(m=0;m<side;m++){
+						value = matrix[m*side+k];
+						nimgx = imgx - centeroffset+k;
+						nimgy = imgy - centeroffset+m;
+						
+						if(nimgx<0) nimgx*=-1;
+						if(nimgy<0) nimgy*=-1;
+						if(nimgx>imgw-1) nimgx -= (nimgx - (imgw-1));
+						if(nimgy>imgh-1) nimgy -= (nimgy - (imgh-1));
+						
+						color = bmpdata.getColorAt(nimgx,nimgy);
+		
+						psum.r+=(color.r*value);
+						psum.g+=(color.g*value);
+						psum.b+=(color.b*value);					
+					}
+				}
+				
+				psum.r = Math.floor((psum.r/sum)*factor + bias);
+				psum.g = Math.floor((psum.g/sum)*factor + bias);
+				psum.b = Math.floor((psum.b/sum)*factor + bias);
+		
+				psum = range(psum);
+				return psum;
+					
+			}
+		}
+		
 		
 		/**  utils */
 		
-		function _range(color){
+		function range(color){
 			if(color.r>255)color.r = 255; else if(color.r<0)color.r = 0;
 			if(color.g>255)color.g = 255; else if(color.g<0)color.g = 0;
 			if(color.b>255)color.b = 255; else if(color.b<0)color.b = 0;
 			if(color.a>255)color.a = 255; else if(color.a<0)color.a = 0;
 			
 			return color;
+		}
+		
+		function distance(x1,y1,x2,y2){
+			var dx = x1 - x2;
+			var dy = y1 - y2;
+			return Math.sqrt(dx*dx+dy*dy);
+		}
+		function isInsideEllipse(x,y,a,b){
+			return x*x/(a*a) + y*y/(b*b) < 1;
 		}
 		
 		

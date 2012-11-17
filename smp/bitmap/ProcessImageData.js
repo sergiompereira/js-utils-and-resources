@@ -1,4 +1,4 @@
-importScripts("PointFilter.js", "ConvolutionMatrix.js", "DistributionFilter.js");
+importScripts("PointFilter.js","ConvolutionMatrix.js","DistributionFilter.js");
 
 var console = {};
 	console.log = function(msg){
@@ -23,7 +23,6 @@ var console = {};
 		
 			readFilters();
 			postMessage({"imagedata":copyData(tempBuffer,buffer)});
-			console.log("posted")
 			
 			//routines
 			function readFilters() {
@@ -77,7 +76,8 @@ var console = {};
 								filters.splice(i,1);
 								readFilters();
 								return;
-							}else {
+							}else{
+								
 								//ignore filter and go on
 								filters.splice(i, 1);
 								readFilters();
@@ -115,7 +115,7 @@ var console = {};
 							filterMap = lastparam;
 						}
 						
-						if ((!filterFnc && !filterMap) || (filterFnc && filterFnc(color)) || (filterMap && getColor(filterMap, i).a > 125)) {
+						if ((!filterFnc && !filterMap) || (filterFnc && filterFnc(color)) || (filterMap && getColor(filterMap, i).g > 125)) {
 							color = PointFilter[pointFiltersStack[j].name](color, pointFiltersStack[j].params);
 						}
 					}
@@ -133,16 +133,21 @@ var console = {};
 				if(args.length>1) {bias = args[1] }else{ bias = 0};
 				if(args.length>2) {filter = args[2] }else{ filter = null};
 								
-				var filterFnc, filterMap;
+				var filtered = false, filterFnc, filterMap, filterArea;
 				if (filter) {
 					if (typeof filter === "function") {
 						filterFnc = filter;
-					}
-					else if (typeof filter === "object" && filter.data) {
+						filtered = true;
+					}else if (typeof filter === "object" && filter.data) {
 						filterMap = filter;
+						filtered = true;
+					}else if(typeof filter === "object" && filter.x && filter.r){
+						filterArea = filter;
+						filterArea.ir = (filterArea.border) ? filterArea.r*(1-filterArea.border) : filterArea.r;
+						filtered = true;
 					}
 				}
-
+				
 				//matrix should have a even number of items and their square root should be an integer
 				var side = Math.sqrt(matrix.length),
 					centeroffset = (side-1)/2,
@@ -165,18 +170,60 @@ var console = {};
 				//avoid division by zero
 				if(sum == 0) sum = 1;
 			
-				var index,color;
-				for(y=0; y<imgh; y++){
-					for(x=0; x<imgw; x++){
-						color = getColorAt(sourcedata,x,y);
-						if((!filterFnc && !filterMap) || (filterFnc && filterFnc(color))  || (filterMap && getColorAt(filterMap,x,y).a > 125)){
-							setColorAt(tempBuffer, x,y, convolute(sourcedata,x,y,matrix,factor,bias));
-						}else{
-							setColorAt(tempBuffer, x,y, color);
+				
+				if(filterArea){
+					for (y = filterArea.y-filterArea.r; y < filterArea.y+filterArea.r; y++) {
+						for (x = filterArea.x-filterArea.r; x < filterArea.x+filterArea.r; x++) {
+							var originColor = getColorAt(sourcedata,x,y);
+							var color = convolute(sourcedata,x,y,matrix,factor,bias);
+							var dist = distance(x,y,filterArea.x,filterArea.y);
+							
+							if(filterArea.ir < filterArea.r){
+								if(dist<filterArea.ir){
+									setColorAt(tempBuffer, x,y, color);
+								}else if(dist<filterArea.r){
+									var interpol = interpolateColorLinear(originColor,color,filterArea.ir/dist);
+									setColorAt(tempBuffer, x,y, interpol);
+								}else{
+									setColorAt(tempBuffer, x,y, originColor);
+								}
+							}else if(dist<filterArea.r){
+								setColorAt(tempBuffer, x,y, color);
+							}else{
+								setColorAt(tempBuffer, x,y, originColor);
+							}
+							
+						}
+					}
+				}else if(filterMap){
+					var index,color;
+					for(y=0; y<imgh; y++){
+						for(x=0; x<imgw; x++){
+							var originColor = getColorAt(sourcedata,x,y);
+							var color = convolute(sourcedata,x,y,matrix,factor,bias);
+							var mapcolor = getColorAt(filterMap,x,y).g;
+							if(mapcolor > 0){
+								var color = convolute(sourcedata,x,y,matrix,factor,bias);
+								var interpol = interpolateColorLinear(originColor,color,mapcolor/255);
+								setColorAt(tempBuffer, x,y, interpol);
+							}else{
+								setColorAt(tempBuffer, x,y, originColor);
+							}
+						}
+					}
+				}else{
+					var index,color;
+					for(y=0; y<imgh; y++){
+						for(x=0; x<imgw; x++){
+							if(!filtered || (filterFnc && filterFnc(color))){
+								setColorAt(tempBuffer, x,y, convolute(sourcedata,x,y,matrix,factor,bias));
+							}else{
+								color = getColorAt(sourcedata,x,y);
+								setColorAt(tempBuffer, x,y, color);
+							}
 						}
 					}
 				}
-				
 				
 				
 				function convolute(sourcedata,imgx,imgy,matrix,factor,bias){
@@ -230,7 +277,8 @@ var console = {};
 	}, false);
 
 
-	//utils
+	/** utils **/
+	
 	function getColor(imgdata, i){
 		var data = imgdata.data;
 
@@ -327,7 +375,29 @@ var console = {};
 		}
 		return true;
 	}
-	
-	
+	function distance(x1, y1, x2, y2) 
+    {
+    	var dx = x1 - x2;
+		var dy = y1 - y2;
+		return Math.sqrt(dx*dx+dy*dy);
+    }
+	function interpolateColorLinear(color1,color2,r){
+		return {
+			r:linearInterpolation(color1.r,color2.r,r),
+			g:linearInterpolation(color1.g,color2.g,r),
+			b:linearInterpolation(color1.b,color2.b,r),
+			a:linearInterpolation(color1.a,color2.a,r)
+		}
+	}
+	function linearInterpolation(y1,y2,rORxk,x1,x2){
+    	var r;
+    	if(arguments.length == 3){
+    		r = rORxk;
+    	}else if(arguments.length == 5){
+    		r = (rORxk-x1)/(x2-x1);
+    	}
+    	
+    	return y1*(1-r) + y2*r;
+    }
 	
 }());
