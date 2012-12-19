@@ -5,7 +5,12 @@
     		 
     	//singleton
 		var instance;
-     	     	
+     	 
+		/**
+		 * include
+		 * <div id="fb-root"></div>
+		 * just before the closing </body> tag
+		 */
      	     	
 		var constructor = function(appid,modules){
 				
@@ -84,6 +89,7 @@
       FcbkApi.EVENT_POST = 'EVENT_POST';
       FcbkApi.EVENT_DELETE = 'EVENT_DELETE';
       FcbkApi.FRIENDS_INVITE = 'FRIENDS_INVITE';
+      FcbkApi.PHOTO_POST = 'PHOTO_POST';
       
       function BuildModules(){
          
@@ -284,6 +290,40 @@
 						_self.dispatchEvent(FcbkApi.POST, {status:-1, response:response});
 					} else {
 						_self.dispatchEvent(FcbkApi.POST,  {status:1, response:response});
+					}
+				}
+	    	
+	      };
+	      
+	      FcbkApi.modules.photo = function(obj){
+	    	  //http://developers.facebook.com/docs/reference/api/photo/
+	    	  
+	    	  var _self = obj;
+	    	  
+	    	  smp.clone({
+	    		  postPhoto:function(caption, url){	
+
+	    			if(_self.userData().id != 'undefined')
+	    			{
+	    				var data = {};
+	    				data.name = caption;
+	    				data.url = url;
+	    				
+	    				FB.api('/me/photos', 'POST', data, onPhotoPost);
+	    					
+    				}else{
+    					return false;
+    				}
+	    		  }
+	    	  },obj);
+	    	  
+	    	  /** event handlers */
+	    	 
+	    	  function onPhotoPost(response) {
+					if (!response || response.error || response.post_id == null || response.post_id == "") {
+						_self.dispatchEvent(FcbkApi.PHOTO_POST, {status:-1, response:response});
+					} else {
+						_self.dispatchEvent(FcbkApi.PHOTO_POST,  {status:1, response:response});
 					}
 				}
 	    	
