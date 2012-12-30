@@ -452,7 +452,7 @@
 				
 				var width = _imageData.width*factor,
 				 	height = _imageData.height*factor,
-					newBmp = new smp.canvas.BitmapData(null, _imageData.width, _imageData.height),
+					newBmp = new smp.canvas.BitmapData(null, width, height),
 					total = newBmp.getData().data.length,
 					interpolationFnc;
 								
