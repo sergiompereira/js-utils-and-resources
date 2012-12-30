@@ -519,8 +519,8 @@
 			
 			function _processFilters(){
 				
-				if(!_imageData){
-					throw new Error("BitmapData -> processFilters : No ImageData available.")
+				if(!_imageData || filters.length == 0){
+					throw new Error("BitmapData -> processFilters : No ImageData available or no filters defined.")
 					return;
 				} 
 						
