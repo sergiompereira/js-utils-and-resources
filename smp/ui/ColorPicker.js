@@ -1,9 +1,14 @@
-(function(){
+(function(jq){
 	
-	smp.namespace("smp.ui.ColorPicker");
+	smp.createNamespace("smp.ui.ColorPicker");
 	
 	/**
 	 * @see http://www.boostworthy.com/blog/?p=200
+	 * 
+	 * @example
+	 * var colorPicker = new smp.ui.ColorPicker(canvaselRef);
+		colorPicker.drawGradientLinear(smp.ui.ColorPicker.spectrum(canvaselRef.width,true), {x:canvaselRef.width, y:canvaselRef.height}, null, null, true);
+		colorPicker.addEventListener("change", onColorStartChange);
 	 */
 	
 	 
@@ -20,24 +25,23 @@
 		
 		Constructor = function(canvasel){
 			
+			var self = this;
 			var canvas = canvasel;
 			var context = canvas.getContext('2d');
 			var canvasBitmapData;
 			var colorsColl;
-			var selectedColor = 0;
+			var selectedColor = {r:0,g:0,b:0};
 			var marker = document.createElement('span');
 			marker.setAttribute('style','display:block;width:3px;height:3px;border:1px solid #ccc;position:absolute;');
 			marker = jq(marker);
 			
-			var colorCodeDisplay = document.createElement('span');
-			colorCodeDisplay.innerHTML = "#";
-			jq(canvas).after(colorCodeDisplay);
+			//var colorCodeDisplay = document.createElement('span');
+			//colorCodeDisplay.innerHTML = "#";
+			//jq(canvas).after(colorCodeDisplay);
 			
 			var canvasPos = jq(canvas).offset();
 			
-			var evtDisp = new EventDispatcher();
-			evtDisp.clone(this);
-			delete evtDisp;
+			smp.events.extend(self);
 	
 			/**
 			 * @param	xcolors				:	Array of hexadecimal values
@@ -74,9 +78,9 @@
 						//draw a gradient (dark to bright) line per color
 						var gradientStyle = context.createLinearGradient(0,0,0,size.y);
 						var j,color,value = {};
-						var colors = [ColorUtils.getColorParts('000000',10),
-						              ColorUtils.getColorParts(xcolors[i],10),
-						              ColorUtils.getColorParts('ffffff',10)];
+						var colors = [ColorUtils.serializeColor('000000',10),
+						              ColorUtils.serializeColor(xcolors[i],10),
+						              ColorUtils.serializeColor('ffffff',10)];
 				
 						var total = size.y/2;
 						//from black to color
@@ -129,22 +133,24 @@
 					
 				}
 				
-				if(jQuery && smp.canvas.CanvasBitmapData) handleColorSelection(this);
+				if(jQuery && smp.canvas.BitmapData) handleColorSelection();
 				
 			}
 		
 		
 		//private
-		function handleColorSelection(self) 
+		function handleColorSelection() 
 		{
 			jq = jQuery.noConflict();
-			jq(canvas).bind('click', jq.proxy(onCanvasClicked,self));
-			canvasBitmapData = new smp.canvas.CanvasBitmapData();
+			canvasBitmapData = new smp.canvas.BitmapData();
+			jq(canvas).on('click', onCanvasClicked);
+			
 			
 			
 		}
 		//events
 		function onCanvasClicked(evt){
+
 			jq(canvas).parent().append(marker);	
 			var pixelPos = {
 					x:Math.round(evt.pageX - jq(evt.currentTarget).offset().left),
@@ -155,14 +161,10 @@
 			
 			
 			var bmpData = context.getImageData(pixelPos.x,pixelPos.y,1,1);
-			selectedColor = canvasBitmapData.getDataAtPoint(0,0,bmpData,true);
-			/** See the proxy on 'handleColorSelection', 
-			    which receives the context from the public call of method 'drawGradientLinear'
-			    Otherwise, if no context was provided, 'this' would point to window
-			    and if no proxy was used, 'this' would point to the canvas element
-			*/
-			this.dispatchEvent('change',selectedColor);
-			colorCodeDisplay.innerHTML = "#"+selectedColor.r+selectedColor.g+selectedColor.b;
+			canvasBitmapData.setData(bmpData);
+			selectedColor = canvasBitmapData.getColorAt(0,0,true);
+			self.dispatchEvent('change',selectedColor);
+			//colorCodeDisplay.innerHTML = selectedColor.r+selectedColor.g+selectedColor.b;
 		}	
 		
 		function getColor() {
@@ -204,4 +206,4 @@
 	
 
 	
-}());
+}(jQuery));

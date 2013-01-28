@@ -227,7 +227,7 @@
 		saturation:saturation,
 		colorTemperature:colorTemperature,
 		threshold:threshold,
-		reg:red,
+		red:red,
 		green:green,
 		blue:blue,
 		invert:invert,

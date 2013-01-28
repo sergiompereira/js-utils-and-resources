@@ -452,7 +452,7 @@
 				
 				var width = _imageData.width*factor,
 				 	height = _imageData.height*factor,
-					newBmp = new smp.canvas.BitmapData(null, _imageData.width, _imageData.height),
+					newBmp = new smp.canvas.BitmapData(null, width, height),
 					total = newBmp.getData().data.length,
 					interpolationFnc;
 								
@@ -519,8 +519,8 @@
 			
 			function _processFilters(){
 				
-				if(!_imageData){
-					throw new Error("BitmapData -> processFilters : No ImageData available.")
+				if(!_imageData || filters.length == 0){
+					throw new Error("BitmapData -> processFilters : No ImageData available or no filters defined.")
 					return;
 				} 
 						
