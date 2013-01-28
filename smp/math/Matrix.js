@@ -1,10 +1,38 @@
-
 /**
- * namespace pattern
- * @class Matrix
- * @namespace smp.geom
- */
+* TODO
 
+var matrix = (function(){
+		return {
+			create : function(arr){
+				var matrix = {mtx:arr,width:0,height:0};
+				matrix.height = arr.length;
+				matrix.width = arr[0].length;
+				
+				return matrix;
+			},
+			product : function(a,b) {
+			    if (a.width != b.height) {
+			        throw "error: incompatible sizes";
+			    }
+			 
+			    var result = [];
+			    for (var i = 0; i < a.height; i++) {
+			        result[i] = [];
+			        for (var j = 0; j < b.width; j++) {
+			            var sum = 0;
+			            for (var k = 0; k < a.width; k++) {
+			                sum += a.mtx[i][k] * b.mtx[k][j];
+			            }
+			            result[i][j] = sum;
+			        }
+			    }
+			    return smp.maths.matrix.create(result); 
+			}
+		}
+	}());
+
+*/
+	
 (function(){
 	
 	smp.namespace("smp.math.Matrix");
