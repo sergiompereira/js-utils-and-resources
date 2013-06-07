@@ -72,7 +72,7 @@ var console = {};
 								}else{
 									firstrun = false;
 								}
-								processDistributionFilter(DistributionFilter[filtername], filters[i].params.slice(1));
+								processDistributionFilter(DistributionFilter[filtername], filters[i].params.slice(0));
 								filters.splice(i,1);
 								readFilters();
 								return;
