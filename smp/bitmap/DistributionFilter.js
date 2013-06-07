@@ -25,12 +25,16 @@
 		return dest;
 	}
 	
+	/**
+	 * params[0] : threshold value to decide upon 0(black) or 255(white)
+	 *
+	 */
 	function halftone(imagedata,x,y,params)
 	{	
 		var toString = Object.prototype.toString;
 		var astr = "[object Array]";
 		
-		var threshold = (params && toString.call(params)===astr && params.length>0) ? params[0] : 125,
+		var threshold = (params && toString.call(params)===astr && params.length>0) ? params[0] : 127,
 	    	color = getColor(imagedata,x,y),
 	      	sat = saturation(color,0),
 	      	dest = copyColor(sat);
@@ -56,9 +60,64 @@
 			  
 	}
 	
+
+	/**
+	 * params[0] : bit size value to specify on how many values per channel 
+	 *				values per channel = bitsize -> number of colors = bitsize^3
+	 */
+	function dither(imagedata,x,y,params)
+	{	
+		var toString = Object.prototype.toString;
+		var astr = "[object Array]";
+		
+		var bitsize = (params && toString.call(params)===astr && params.length>0 && params[0]>1) ? params[0] : 2,
+			ratio = 255/(bitsize-1),
+	    	color = getColor(imagedata,x,y),
+	      	//sat = saturation(color,0),
+	      	dest = copyColor(color);
+		
+		dest.r = Math.round(dest.r/ratio)*ratio;
+		dest.g = Math.round(dest.g/ratio)*ratio;
+		dest.b = Math.round(dest.b/ratio)*ratio;
+	    /* 
+		if(sat.r > threshold){dest.r = dest.g = dest.b = 255;}
+	      else{dest.r = dest.g = dest.b = 0;};
+	    */
+		
+		var error = {};
+		  error.r = color.r - dest.r;
+		  error.g = color.g - dest.g;
+		  error.b = color.b - dest.b;
+		  
+	      setColor(imagedata, x, y, dest);
+	     
+	     var ncolor = getColor(imagedata, x+1,y);
+		      ncolor.r =  ncolor.r + 7/16*error.r;
+		      ncolor.g =  ncolor.g + 7/16*error.g;
+		      ncolor.b =  ncolor.b + 7/16*error.b;
+		      setColor(imagedata, x+1,y, range(ncolor));
+		ncolor = getColor(imagedata, x-1,y+1);
+			  ncolor.r =  ncolor.r + 3/16*error.r;
+		      ncolor.g =  ncolor.g + 3/16*error.g;
+		      ncolor.b =  ncolor.b + 3/16*error.b;
+	      		setColor(imagedata, x-1,y+1, range(ncolor));
+	    ncolor = getColor(imagedata, x,y+1);
+		      ncolor.r =  ncolor.r + 5/16*error.r;
+		      ncolor.g =  ncolor.g + 5/16*error.g;
+		      ncolor.b =  ncolor.b + 5/16*error.b;
+		      setColor(imagedata, x,y+1, range(ncolor));
+	    ncolor = getColor(imagedata, x+1,y+1);
+		      ncolor.r =  ncolor.r + 1/16*error.r;
+		      ncolor.g =  ncolor.g + 1/16*error.g;
+		      ncolor.b =  ncolor.b + 1/16*error.b;
+		      setColor(imagedata, x+1,y+1, range(ncolor));
+			  
+	}
+	
 	
 	DistributionFilter = {
-		halftone:halftone
+		halftone:halftone,
+		dither:dither
 	}
 	
 	//utils

@@ -33,7 +33,7 @@
 			return auxContext.createImageData(w,h);
 		}
 		
-		function _cloneImageData(bmpData){
+		function _cloneImageData(imgData){
 			auxContext.putImageData(imgData, 0, 0);
 			return auxContext.getImageData(0, 0, imgData.width, imgData.height)
 		}
