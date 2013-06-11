@@ -1,15 +1,15 @@
 /**
  * namespace pattern
- * @class StringUtilities
+ * @class StringUtils
  * @namespace smp.utils
  */
 
 (function(){
 	
-	smp.createNamespace("smp.utils.StringUtilities");
+	smp.createNamespace("smp.utils.StringUtils");
 	
 	//constructor (instance creation)
-	smp.utils.StringUtilities = (function()
+	smp.utils.StringUtils = (function()
 	{
 		var _value;
 		var Constructor;
@@ -35,7 +35,7 @@
 	
 	//static methods
 
-	smp.utils.StringUtilities.trim = function(str)
+	smp.utils.StringUtils.trim = function(str)
 	{
 		var l=0; var r=str.length -1;
 		while(l < str.length && str[l] == ' ')
@@ -45,7 +45,7 @@
 		return str.substring(l, r+1);
 	}
 	
-	smp.utils.StringUtilities.isWhitespace = function(ch) 
+	smp.utils.StringUtils.isWhitespace = function(ch) 
 	{
 		 return ch == '\r' || 
 					ch == '\n' ||
@@ -54,7 +54,7 @@
 					ch == ' '; 
     }
 	
-	smp.utils.StringUtilities.truncate = function(inputString, maxLength, appendedString) 
+	smp.utils.StringUtils.truncate = function(inputString, maxLength, appendedString) 
 	{
 			if (!appendedString) {
 				appendedString = "...";
@@ -65,7 +65,7 @@
 				ttext = inputString.substr(0, maxLength);
 				
 				var j = ttext.length - 1;
-				while (!smp.utils.StringUtilities.isWhitespace(ttext.charAt(j))) 
+				while (!smp.utils.StringUtils.isWhitespace(ttext.charAt(j))) 
 				{
 					if (j > 0) {
 						j--;
@@ -97,7 +97,7 @@
 		
 	}
     
-	smp.utils.StringUtilities.wrapString = function(originalString, maxLength) 
+	smp.utils.StringUtils.wrapString = function(originalString, maxLength) 
 	{
 		var chunkedString = [];
 		var maxlen = maxLength;
@@ -127,7 +127,7 @@
 			if (tempString.length == maxlen)
 			{
 				var j = tempString.length - 1;
-				while (!smp.utils.StringUtilities.isWhitespace(tempString.charAt(j))) 
+				while (!smp.utils.StringUtils.isWhitespace(tempString.charAt(j))) 
 				{
 					
 					if (j > 0) {
@@ -166,7 +166,7 @@
 	}
 	
 	
-	smp.utils.StringUtilities.generateKey = function(length) 
+	smp.utils.StringUtils.generateKey = function(length) 
 	{
 	
 	  // start with a blank password
@@ -196,8 +196,12 @@
 	  return password;
 
 	}
+	
+	smp.utils.StringUtils.stripHTML = function(str){
+		return str.replace(/<(?:.|\s)*?>/g, ' ');
+	}
 
-	smp.utils.StringUtilities.removeAccents = function(str){
+	smp.utils.StringUtils.removeAccents = function(str){
 		
 		var nstr = str;
 		
