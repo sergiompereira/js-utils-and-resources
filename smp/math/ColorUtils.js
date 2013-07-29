@@ -1,6 +1,10 @@
 (function(){
 	
 	smp.createNamespace("smp.math.ColorUtils");
+    
+    /**
+    *   Requires MathUtils
+    */
 	
 	//constructor (instance creation)
 	smp.math.ColorUtils = (function()
@@ -182,6 +186,55 @@
 		return color
 	}
 	
+    smp.math.ColorUtils.interpolateColor = function(colors, ratio){
+        if(typeof smp.math.MathUtils === "undefined") {
+            console.log("ColorUtils->interpolateColor : MathUtils class required.");   
+            return;
+        }
+        
+        var methodFunc;
+        switch(colors.length){
+            case 4:
+                methodFunc = smp.math.MathUtils.cubicInterpolation;
+                break;
+             default:
+                methodFunc = smp.math.MathUtils.linearInterpolation;
+                break;
+        }
+        
+        var _self = smp.math.ColorUtils;
+        var serializedColors = [],i;
+        for(i=0; i<colors.length; i++){
+            serializedColors.push(_self.serializeColor(colors[i],10));    
+        }
+        
+        if(colors.length == 4){
+            return {
+                r:getCubic(serializedColors[0].r,serializedColors[1].r,serializedColors[2].r,serializedColors[3].r,ratio), 
+                g:getCubic(serializedColors[0].g,serializedColors[1].g,serializedColors[2].g,serializedColors[3].g,ratio),
+                b:getCubic(serializedColors[0].b,serializedColors[1].b,serializedColors[2].b,serializedColors[3].b,ratio),
+                a:getCubic(serializedColors[0].a,serializedColors[1].a,serializedColors[2].a,serializedColors[3].a,ratio)
+            }
+        }else{
+            return {
+                r:getLinear(serializedColors[0].r,serializedColors[1].r,ratio), 
+                g:getLinear(serializedColors[0].g,serializedColors[1].g,ratio),
+                b:getLinear(serializedColors[0].b,serializedColors[1].b,ratio),
+                a:getLinear(serializedColors[0].a,serializedColors[1].a,ratio)
+            }
+        }
+		
+        function getLinear(colorpart0,colorpart1){
+            return smp.math.MathUtils.linearInterpolation(colorpart0,colorpart1, ratio);
+        }
+        
+        function getCubic(colorpart0,colorpart1,colorpart2,colorpart3,ratio){
+            return smp.math.MathUtils.cubicInterpolation(colorpart0,colorpart1,colorpart2,colorpart3, ratio);
+        }
+		
+        
+    }
+    
 	/**
 	 * Returns an array with the colors of the spectrum
 	 * @param	hex		: Boolean, if true, returns the array with DomString Colors #rrggbb

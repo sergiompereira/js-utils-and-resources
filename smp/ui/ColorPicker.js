@@ -1,4 +1,4 @@
-(function(jq){
+(function(){
 	
 	smp.createNamespace("smp.ui.ColorPicker");
 	
@@ -31,15 +31,8 @@
 			var canvasBitmapData;
 			var colorsColl;
 			var selectedColor = {r:0,g:0,b:0};
-			var marker = document.createElement('span');
-			marker.setAttribute('style','display:block;width:3px;height:3px;border:1px solid #ccc;position:absolute;');
-			marker = jq(marker);
 			
-			//var colorCodeDisplay = document.createElement('span');
-			//colorCodeDisplay.innerHTML = "#";
-			//jq(canvas).after(colorCodeDisplay);
-			
-			var canvasPos = jq(canvas).offset();
+			var canvasPos = {x:canvas.offsetLeft, y:canvas.offsetTop};
 			
 			smp.events.extend(self);
 	
@@ -133,7 +126,7 @@
 					
 				}
 				
-				if(jQuery && smp.canvas.BitmapData) handleColorSelection();
+				if(smp.canvas.BitmapData) handleColorSelection();
 				
 			}
 		
@@ -141,9 +134,8 @@
 		//private
 		function handleColorSelection() 
 		{
-			jq = jQuery.noConflict();
 			canvasBitmapData = new smp.canvas.BitmapData();
-			jq(canvas).on('click', onCanvasClicked);
+			smp.events.attach(canvas,'click', onCanvasClicked);
 			
 			
 			
@@ -151,14 +143,11 @@
 		//events
 		function onCanvasClicked(evt){
 
-			jq(canvas).parent().append(marker);	
 			var pixelPos = {
-					x:Math.round(evt.pageX - jq(evt.currentTarget).offset().left),
-					y:Math.round(evt.pageY - jq(evt.currentTarget).offset().top)
+					x:Math.round(evt.pageX - evt.currentTarget.offsetLeft),
+					y:Math.round(evt.pageY - evt.currentTarget.offsetTop)
 			};
-			
-			marker.css({'left':canvasPos.left+pixelPos.x,'top':canvasPos.top+pixelPos.y});
-			
+						
 			
 			var bmpData = context.getImageData(pixelPos.x,pixelPos.y,1,1);
 			canvasBitmapData.setData(bmpData);
@@ -206,4 +195,4 @@
 	
 
 	
-}(jQuery));
+}());
