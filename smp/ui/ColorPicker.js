@@ -75,7 +75,7 @@
 						              ColorUtils.serializeColor(xcolors[i],10),
 						              ColorUtils.serializeColor('ffffff',10)];
 				
-						var total = size.y/2;
+						var total = size.y*4/10;
 						//from black to color
 						for(j=0; j<total; j++){
 							
@@ -92,7 +92,7 @@
 							gradientStyle.addColorStop(j/size.y, "#"+color);
 						}
 						//from color to white
-						for(j=0; j<size.y/2; j++){
+						for(j=0; j<size.y*4/10; j++){
 							
 							value.r = Math.round(MathUtils.cosineInterpolation(colors[1].r,colors[2].r,j/total));
 							value.g = Math.round(MathUtils.cosineInterpolation(colors[1].g,colors[2].g,j/total));
@@ -104,7 +104,7 @@
 							
 							color = value.r+value.g+value.b;
 							
-							gradientStyle.addColorStop((size.y/2+j)/size.y, "#"+color);
+							gradientStyle.addColorStop((size.y*6/10+j)/size.y, "#"+color);
 						}
 						
 						context.fillStyle = gradientStyle;
