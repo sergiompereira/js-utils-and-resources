@@ -244,9 +244,12 @@
 	{
 		
 		var i,nRadians,nR,nG,nB,nColor,spectrumColors = [];
-		var resolution = 360/total;
+		var resolution = 4/total;
 		
-		for (i = 0; i <= 360; i+=resolution)
+        //using gaussian functions for each three channels
+        
+        var c = 1, a = 1/(c*Math.sqrt(Math.PI*2));
+		for (i = -2; i <= 2; i+=resolution)
 		{
 
 			/*
@@ -261,12 +264,12 @@
 			 * The number of places to shift is given as the second argument to the shift operators.
 			 * x = y << 2;
 			 */
-			
-			nRadians = i * (Math.PI / 180);
-			nR = Math.cos(nRadians)                   * 127 + 128 << 16;
-			nG = Math.cos(nRadians + 2 * Math.PI / 3) * 127 + 128 << 8;
-			nB = Math.cos(nRadians + 4 * Math.PI / 3) * 127 + 128;
-			   
+
+            
+            nR = a*Math.pow(Math.E, -Math.pow(i-0.2, 2)/2.88) *2.5 * 255 << 16;
+            nG = a*Math.pow(Math.E, -Math.pow(i-1, 2)/1.33) *2.5 * 255 << 8;
+            nG += a*Math.pow(Math.E, -Math.pow(i+2.4, 2)/0.5) *2.7 * 255 << 8;
+            nB = a*Math.pow(Math.E, -Math.pow(i+2, 2)) *2.5 * 255;
 			
 			/*
 			 * Some more maths (bitwise operation continued):
