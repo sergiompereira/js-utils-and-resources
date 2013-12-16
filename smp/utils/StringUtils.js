@@ -176,17 +176,17 @@
 	  var possible = "0123456789abcdefghjkmnpqrstvwxyz"; 
 		
 	  // set up a counter
-	  var i = 0, char; 
+	  var i = 0, letter; 
 
 	  // add random characters to $password until $length is reached
 	  while (i < length) { 
 
 		// pick a random character from the possible ones
-		char = possible.substr(Math.round(Math.random()*(possible.length-1)), 1);
+		letter = possible.substr(Math.round(Math.random()*(possible.length-1)), 1);
 			
 		// we don't want this character if it's already in the password
-		if (password.indexOf(char)==-1) { 
-		  password += char;
+		if (password.indexOf(letter)==-1) { 
+		  password += letter;
 		  i++;
 		}
 
