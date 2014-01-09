@@ -71,6 +71,31 @@
 				return d.createElementNS("http://www.w3.org/2000/svg", el);
 		};
 	
+	
+	
+	smp.graphics.Svg.regularPolygon = function(sides,radius){
+		
+		if(typeof sides === 'undefined' || typeof radius === 'undefined') return null;
+		
+		var i=0, 
+			anglestart = 0, 
+			angleinc = 2*Math.PI/sides, 
+			angle,x,y,
+			points = '';
+		
+		var el = smp.graphics.Svg.create("polygon");
+		
+		for(i=0; i<sides; i++){
+			angle = anglestart + i*angleinc;
+			x = Math.sin(angle) * radius + radius;
+			y = -Math.cos(angle) * radius + radius ;
+			points += (x+','+y+' ');
+		}
+		el.setAttribute('points', points);
+		
+		return el;
+	}
+	
 		/**
 		 * 
 		 * @param	sx
@@ -86,7 +111,8 @@
 		 * @param	lineAlpha			: defaults 1
 		 * @return	svg <g> element
 		 */
-	smp.graphics.Svg.createWedge = function(sx, sy, outerRadius, innerRadius, startAngle, endAngle, fillColor, fillAlpha, lineWidth, lineColor, lineAlpha){
+	
+	smp.graphics.Svg.wedge = function(sx, sy, outerRadius, innerRadius, startAngle, endAngle, fillColor, fillAlpha, lineWidth, lineColor, lineAlpha){
 			
 			
 				if(!outerRadius) outerRadius = 50;
