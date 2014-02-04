@@ -21,33 +21,52 @@
 		
 		
 		Use:
-			var gallery = new smp.ui.HGallery(jq("section.highlights .gallery"));
-			var numpages = gallery.getNumPages();
 			
-			var backBtn = jq("section.highlights > span.back");
-				backBtn.on("click", handleBackButtonClick);
-			var forthBtn = jq("section.highlights > span.forth");
-				forthBtn.on("click", handleForthButtonClick);
-				handleBtnsState();
-				
-			function handleForthButtonClick(evt){
-				gallery.next();
-				handleBtnsState();
-			}
-			function handleBackButtonClick(evt){
-				gallery.prev();
-				handleBtnsState();
-			}
+            var gallery = new smp.ui.HGallery(jq(".gallery-slides-container"));
+            var numpages = gallery.getNumPages();
+            
+            backBtn = jq(".arrow-left-container");
+                backBtn.on("click", handleBackButtonClick);
+            forthBtn = jq(".arrow-right-container");
+                forthBtn.on("click", handleForthButtonClick);
+                handleBtnsStateOnUpdate();
+                
+            function handleForthButtonClick(evt){
+                gallery.next();
+                handleBtnsState();
+            }
+            function handleBackButtonClick(evt){
+                gallery.prev();
+                handleBtnsState();
+            }
+            
 			function handleBtnsState(){
-				if(gallery.getCurrentPage() === numpages){
+				if(gallery.getCurrentPage() === gallery.getNumPages()){
 					forthBtn.hide();
+					backBtn.show();
 				}else if(gallery.getCurrentPage() === 1){
 					backBtn.hide();
+					forthBtn.show();
 				}else{
 					forthBtn.show();
 					backBtn.show();
 				}
 			}
+			function handleBtnsStateOnUpdate(){
+				console.log(gallery.getNumPages());
+			   if(gallery.getNumPages() > 1){
+				   
+					forthBtn.show();
+					backBtn.hide();
+			   }else{
+					forthBtn.hide();
+					backBtn.hide();
+			   }
+			}
+        
+			//on update
+			gallery.update();
+            handleBtnsStateOnUpdate();
 	
 		 */
 		
@@ -86,7 +105,8 @@
 			var span = parent.innerWidth();
 			
 			build();
-			
+			view.parent().append(jq(d.createElement('div')).css('clear','both'));
+            
 			function build(){
 				state = 0;
 				updateGallery();
@@ -98,7 +118,6 @@
 					slides.eq(i).css('float' , 'left');
 				}
 				view.css('width' , viewWidth+'px');
-				view.append(jq(d.createElement('div')).css('clear','both'));
 			}
 			
 			
