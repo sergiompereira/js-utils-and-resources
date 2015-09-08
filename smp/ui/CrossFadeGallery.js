@@ -3,7 +3,7 @@
 
 (function(jq){
 	
-	smp.namespace("smp.ui.CrossFadeGallery");
+	smp.createNamespace("smp.ui.CrossFadeGallery");
 	
 	/**
 		Advisable structure:
@@ -33,12 +33,19 @@
 			var	container = jq(gallery);
 			var state = 0;
 			container.parent().css('overflow','hidden');
-			var slides = container.children();
 
-			var count = slides.length;
-			var i,cell,cellcol = [];
-			for(i=1;i<slides.length; i++){
-				slides.eq(i).css({'display' : 'none','opacity':'0'});
+			var slides,count,i,cell,cellcol = [];
+			
+			function init(){
+				slides = container.children();
+				count = slides.length;
+				updateGallery();
+			}
+			
+			this.reset = function(newcontainer){
+				if(typeof newcontainer !== 'undefined') container = jq(newcontainer);
+				state = 0;
+				init();
 			}
 		
 			this.prev = function(){
@@ -53,7 +60,7 @@
 					updateGallery();
 				}
 			}
-			this.goto = function(id){
+			this.goToItem = function(id){
 				if(id < count && id >= 0){
 					state = id;
 					updateGallery();
